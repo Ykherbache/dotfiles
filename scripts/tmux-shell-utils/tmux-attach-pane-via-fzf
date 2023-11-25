@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Check if a tmux session is active
+if [ -n "$TMUX" ]; then
+    # Get a list of all windows in the current session
+    windows=$(tmux list-windows -t "$TMUX_WINDOW" -F "#{session_name} #{window_id} #{window_name}" 2>/dev/null)
+else
+     # Get a list of all windows in all sessions
+    windows=""
+    sessions=$(tmux list-sessions -F "#{session_name}" 2>/dev/null)
+    while IFS= read -r session; do
+        session_windows=$(tmux list-windows -t "$session" -F "#{session_name} #{window_id} #{window_name}" 2>/dev/null)
+        windows+="$session_windows"$'\n'
+    done <<< "$sessions"
+fi
+
+# If there are no windows, print an error message and exit
+if [ -z "$windows" ]; then
+    echo "No tmux windows found."
+    exit 1
+fi
+
+# Use fzf to select a window
+selected_window=$(echo "$windows" | fzf)
+
+# Get the session of the selected window
+session_of_selected_window=$(echo "$selected_window" | awk '{print $1}')
+
+# Get the window ID of the selected window
+window_id=$(echo "$selected_window" | awk '{print $2}')
+
+# If a window was selected, switch to that window
+if [ -n "$window_id" ]; then
+    if [ -z "$TMUX" ]; then
+        # If outside of tmux, start a new session and switch to the selected window
+        tmux attach-session -t "$session_of_selected_window" \; select-window -t "$window_id"
+    else
+        # If inside tmux, simply switch to the selected window
+        tmux select-window -t "$window_id"
+    fi
+fi
