@@ -39,3 +39,5 @@ bindkey -s ^f "~/.config/tmux-sessionizer\n"
 bindkey -s ^g "~/.config/tmux-attach-session-via-fzf\n"
 bindkey -s ^r "~/.config/tmux-attach-pane-via-fzf\n"
 bindkey -s ^w "~/.config/create_web_project.sh\nclear\n"
+NEWLINE=$'\n┗>'
+PROMPT="$PROMPT $NEWLINE "
