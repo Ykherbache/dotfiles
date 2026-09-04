@@ -1,0 +1,246 @@
+    "[css]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[html]": {
+        "editor.defaultFormatter": "vscode.html-language-features"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "[json]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    },
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.accessibilitySupport": "off",
+    "editor.fontFamily": "'FiraCode Nerd Font', Consolas, 'Courier New', monospace",
+    "editor.fontLigatures": true,
+    "editor.formatOnSave": true,
+    "editor.minimap.enabled": false,
+    "eslint.format.enable": true,
+    "eslint.lintTask.enable": true,
+    "explorer.compactFolders": false,
+    "git.allowForcePush": true,
+    "git.confirmSync": false,
+    "git.enableSmartCommit": true,
+    "gitlens.hovers.currentLine.over": "line",
+    "gitlens.hovers.enabled": false,
+    "gitlens.statusBar.enabled": false,
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "ponicode.token": "7da61892-4244-4646-8a0a-2b9c3c6d2919",
+    "remote.SSH.remotePlatform": {
+        "for-my-alma.fr": "linux",
+        "hxh-rpg.fr": "linux",
+        "yaci016-server.eddi.cloud": "linux"
+    },
+    "search.searchOnType": false,
+    "security.workspace.trust.untrustedFiles": "open",
+    "terminal.integrated.defaultProfile.linux": "zsh",
+    "terminal.integrated.defaultProfile.windows": "Ubuntu-22.04 (WSL)",
+    "terminal.integrated.profiles.windows": {
+        "Command Prompt": {
+            "args": [],
+            "icon": "terminal-cmd",
+            "path": [
+                "${env:windir}\\Sysnative\\cmd.exe",
+                "${env:windir}\\System32\\cmd.exe"
+            ]
+        },
+        "Git Bash": {
+            "source": "Git Bash"
+        },
+        "PowerShell": {
+            "icon": "terminal-powershell",
+            "source": "PowerShell"
+        },
+        "Ubuntu-22.04 (WSL)": {
+            "args": [
+                "-d",
+                "Ubuntu-22.04"
+            ],
+            "path": "C:\\WINDOWS\\System32\\wsl.exe"
+        }
+    },
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.tsserver.log": "off",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "webview.experimental.useExternalEndpoint": true,
+    "workbench.sideBar.location": "right",
+    "codesnap.backgroundColor": "#fff",
+    "codesnap.transparentBackground": true,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "svelte.enable-ts-plugin": true,
+    "[svelte]": {
+        "editor.defaultFormatter": "svelte.svelte-vscode"
+    },
+    "[scss]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "liveSassCompile.settings.showOutputWindowOn": "Error",
+    "totalTypeScript.hideAllTips": true,
+    "[ftl]": {},
+    "eslint.workingDirectories": [
+        "./app/back",
+        "./app/front"
+    ],
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "vue.updateImportsOnFileMove.enabled": true,
+    "typescript.implementationsCodeLens.showOnInterfaceMethods": true,
+    "typescript.enablePromptUseWorkspaceTsdk": true,
+    "typescript.implementationsCodeLens.enabled": true,
+    "editor.suggest.matchOnWordStartOnly": false,
+    "tsimporter.filesToScan": [
+        "../shared/**/*.{ts,tsx}",
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.vue"
+    ],
+    "editor.suggest.showStatusBar": true,
+    "editor.quickSuggestionsDelay": 1,
+    "editor.snippetSuggestions": "bottom",
+    "editor.suggest.showReferences": false,
+    "editor.minimap.maxColumn": 300,
+    "editor.suggest.localityBonus": true,
+    "editor.screenReaderAnnounceInlineSuggestion": false,
+    "files.autoSaveDelay": 10000,
+    "[vue]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "figma.autocompleteBlocks": true,
+    "terminal.integrated.env.osx": {},
+    "console-ninja.featureSet": "Pro",
+    "wallaby.codeLensFeature.runTest": true,
+    "console-ninja.allowConsoleLogToTriggerPredictions": true,
+    "github.copilot.editor.enableCodeActions": false,
+    "extensions.ignoreRecommendations": true,
+    "typescript.referencesCodeLens.enabled": true,
+    "quokka.showCodeLensInOutputChannel": false,
+    "typescript.referencesCodeLens.showOnAllFunctions": true,
+    "references.preferredLocation": "view",
+    "console-ninja.captureFunctions": true,
+    "python.diagnostics.sourceMapsEnabled": true,
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 120,
+    "emmet.triggerExpansionOnTab": true,
+    "emmet.useInlineCompletions": true,
+    "html.format.indentInnerHtml": true,
+    "editor.linkedEditing": true,
+    "html.suggest.html5": true,
+    "emmet.showSuggestionsAsSnippets": true,
+    "editor.acceptSuggestionOnCommitCharacter": false,
+    "editor.suggest.showWords": false,
+    "editor.suggestOnTriggerCharacters": false,
+    "editor.suggest.showIssues": false,
+    "editor.suggest.showColors": false,
+    "editor.suggest.showConstructors": false,
+    "editor.suggest.showCustomcolors": false,
+    "editor.suggest.showDeprecated": false,
+    "editor.suggest.showEnumMembers": false,
+    "editor.suggest.showEvents": false,
+    "workbench.colorTheme": "Tomorrow Night Blue",
+    "vim.normalModeKeyBindings": [
+        {
+            "before": [
+                "g",
+                "i"
+            ],
+            "commands": [
+                "editor.action.goToImplementation"
+            ]
+        },
+        {
+            "before": [
+                "n"
+            ],
+            "commands": [
+                "editor.action.marker.nextInFiles"
+            ],
+            "silent": true
+        },
+        {
+            "before": [
+                "N"
+            ],
+            "commands": [
+                "editor.action.marker.prevInFiles"
+            ],
+            "silent": true
+        }
+    ],
+    "vim.normalModeKeyBindingsNonRecursive": [
+        {
+            "before": [
+                "J"
+            ],
+            "after": [
+                "5",
+                "j"
+            ]
+        },
+        {
+            "before": [
+                "K"
+            ],
+            "after": [
+                "5",
+                "k"
+            ]
+        },
+        {
+            "before": [
+                "<Leader>",
+                "j"
+            ],
+            "after": [
+                "J"
+            ]
+        },
+        {
+            "before": [
+                "<Leader>",
+                "p"
+            ],
+            "commands": [
+                "workbench.action.showCommands"
+            ]
+        },
+        {
+            "before": [
+                "c-d"
+            ],
+            "after": [
+                "M",
+                "c-d"
+            ]
+        },
+        {
+            "before": [
+                "c-u"
+            ],
+            "after": [
+                "c-u",
+                "z",
+                "z"
+            ]
+        },
+        {
+            "before": [
+                "<Leader>",
+                "Leader"
+            ],
+            "after": [
+                "z",
+                "a"
+            ]
+        }
+    ],
