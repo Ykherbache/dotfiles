@@ -48,7 +48,8 @@ install_packages() {
       exit 1
     fi
     log "installing Homebrew packages"
-    brew bundle --file="$ROOT/bootstrap/Brewfile"
+    # Do not upgrade already-installed formulae. A delta/rtk upgrade can rebuild LLVM.
+    brew bundle --no-upgrade --file="$ROOT/bootstrap/Brewfile"
   else
     echo "Unsupported OS: $OS" >&2
     exit 1
