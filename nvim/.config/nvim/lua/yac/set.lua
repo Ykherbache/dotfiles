@@ -23,6 +23,10 @@ vim.opt.incsearch = true
 
 vim.opt.termguicolors = true
 
+if vim.fn.has("unix") == 1 and vim.fn.executable("wl-copy") == 1 then
+  vim.opt.clipboard = "unnamedplus"
+end
+
 vim.opt.signcolumn = "yes"
 vim.opt.isfname:append("@-@")
 
