@@ -2,4 +2,5 @@
 node = "lts"
 go = "latest"
 bun = "latest"
-pnpm = "latest"
+# npm backend: the aqua registry for pnpm returned 400 during setup.
+"npm:pnpm" = "latest"

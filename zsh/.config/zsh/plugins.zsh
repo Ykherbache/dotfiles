@@ -2,9 +2,6 @@ ZSH_THEME="simple"
 
 export ZSH_AUTOSUGGEST_BUFFER_MAX_SIZE=20
 export ZSH_AUTOSUGGEST_USE_ASYNC=1
-export ZSH_HIGHLIGHT_STYLES[suffix-alias]=fg=blue,underline
-export ZSH_HIGHLIGHT_STYLES[precommand]=fg=blue,underline
-export ZSH_HIGHLIGHT_STYLES[arg0]=fg=blue,underline,bold
 export YSU_MESSAGE_FORMAT="$(tput bold)$(tput setaf 1)Hey! I found this %alias_type for %command: $(tput setaf 7)%alias$(tput sgr0)"
 export YSU_HARDCORE=1
 export YSU_MODE=BESTMATCH
@@ -24,6 +21,12 @@ if [ -f "$ZSH/oh-my-zsh.sh" ]; then
   source "$ZSH/oh-my-zsh.sh"
 else
   echo "oh-my-zsh is missing. Run bootstrap/install.sh" >&2
+fi
+
+if (( ${+ZSH_HIGHLIGHT_STYLES} )); then
+  export ZSH_HIGHLIGHT_STYLES[suffix-alias]=fg=blue,underline
+  export ZSH_HIGHLIGHT_STYLES[precommand]=fg=blue,underline
+  export ZSH_HIGHLIGHT_STYLES[arg0]=fg=blue,underline,bold
 fi
 
 bindkey '  ' autosuggest-accept

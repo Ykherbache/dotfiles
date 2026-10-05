@@ -55,7 +55,7 @@ else
   bad "git pager delta"
 fi
 
-if ssh -G github.com 2>/tmp/dotfiles-ssh-check.out | grep -q IdentityFile; then
+if ssh -G github.com 2>/tmp/dotfiles-ssh-check.out | grep -qi identityfile; then
   ok "ssh config parses"
 else
   bad "ssh config parses (see /tmp/dotfiles-ssh-check.out)"
