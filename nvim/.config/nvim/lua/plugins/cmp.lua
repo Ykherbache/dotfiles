@@ -5,6 +5,7 @@ return {
     "onsails/lspkind.nvim",
     "hrsh7th/cmp-buffer",
     "hrsh7th/cmp-nvim-lsp",
+    "zbirenbaum/copilot-cmp",
   },
   config = function()
     local cmp = require("cmp")
@@ -38,11 +39,16 @@ return {
         }),
       }),
       sources = cmp.config.sources({
+        { name = "copilot" },
         { name = "nvim_lsp" },
         { name = "buffer" },
       }),
       formatting = {
-        format = lspkind.cmp_format({ with_text = false, maxwidth = 50 }),
+        format = lspkind.cmp_format({
+          with_text = false,
+          maxwidth = 50,
+          symbol_map = { Copilot = "" },
+        }),
       },
     })
 
