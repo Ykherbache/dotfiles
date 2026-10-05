@@ -1,0 +1,53 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__pencil"
+    ]
+  },
+  "model": "opus",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v rtk >/dev/null 2>&1; then rtk hook claude; else cat >/dev/null; fi"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash $HOME/.claude/statusline-command.sh"
+  },
+  "enabledPlugins": {
+    "posthog@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "oh-my-claudecode@omc": true,
+    "swift-lsp@claude-plugins-official": true,
+    "impeccable@impeccable": true
+  },
+  "extraKnownMarketplaces": {
+    "omc": {
+      "source": {
+        "source": "git",
+        "url": "https://github.com/Yeachan-Heo/oh-my-claudecode.git"
+      }
+    },
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      }
+    }
+  },
+  "alwaysThinkingEnabled": false,
+  "effortLevel": "low",
+  "pluginConfigs": {},
+  "autoUpdatesChannel": "stable",
+  "tui": "fullscreen",
+  "preferredNotifChannel": "iterm2_with_bell",
+  "agentPushNotifEnabled": true
+}
