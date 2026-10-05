@@ -34,7 +34,20 @@ install_packages() {
   if [ "$OS" = "Linux" ]; then
     if [ -r /etc/os-release ] && grep -q '^ID=fedora' /etc/os-release; then
       log "installing Fedora packages"
-      sudo dnf install -y $(tr '\n' ' ' < "$ROOT/bootstrap/fedora-packages.txt")
+      # One missing name used to abort the whole transaction, so Stow never ran.
+      local pkg missing=()
+      while IFS= read -r pkg || [ -n "$pkg" ]; do
+        case $pkg in
+          ''|'#'*) continue ;;
+        esac
+        if ! sudo dnf install -y "$pkg"; then
+          missing+=("$pkg")
+          log "skipped $pkg (not in the Fedora repos for this arch)"
+        fi
+      done < "$ROOT/bootstrap/fedora-packages.txt"
+      if [ "${#missing[@]}" -gt 0 ]; then
+        log "still missing: ${missing[*]}"
+      fi
       if command -v fdfind >/dev/null 2>&1 && ! command -v fd >/dev/null 2>&1; then
         mkdir -p "$HOME/.local/bin"
         ln -sfn "$(command -v fdfind)" "$HOME/.local/bin/fd"
