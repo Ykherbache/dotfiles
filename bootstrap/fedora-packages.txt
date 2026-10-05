@@ -8,7 +8,6 @@ ripgrep
 fd-find
 lsd
 git-delta
-peco
 gcc
 make
 unzip

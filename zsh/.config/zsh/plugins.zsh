@@ -11,8 +11,9 @@ plugins=(
   git npm gh dirhistory copyfile sudo golang
   zsh-autosuggestions zsh-syntax-highlighting
   zsh-npm-scripts-autocomplete you-should-use
-  fzf-tab zsh-fzf-history-search zsh-peco-history
+  fzf-tab zsh-fzf-history-search
 )
+command -v peco >/dev/null 2>&1 && plugins+=(zsh-peco-history)
 [ -s "$HOME/.nvm/nvm.sh" ] && plugins+=(nvm)
 command -v kubectl >/dev/null 2>&1 && plugins+=(kubectl)
 command -v dotnet >/dev/null 2>&1 && plugins+=(dotnet)
