@@ -1,11 +1,3 @@
-### quick readme for stuff required to setup tmux well on new workstation
+Tmux config is the `tmux` Stow package (`~/.tmux.conf`). `bootstrap/install.sh` clones TPM into `~/.tmux/plugins/tpm`.
 
-- use this to setup tmux plugun manager in new workstation
-  -git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-  -edit/create ~.tmux.conf
-  ```
-      set -g @plugin 'tmux-plugins/tpm'
-      set -g @plugin 'tmux-plugins/tmux-sensible'
-      # Initialize TMUX plugin manager (keep this line at the very bottom of tmux.conf)
-      run '~/.tmux/plugins/tpm/tpm'
-  ```
+Inside tmux, `prefix + I` installs the plugins listed in the config. Session helpers live in `~/.local/bin` (`tmux-sessionizer`, `tmux-cht.sh`).

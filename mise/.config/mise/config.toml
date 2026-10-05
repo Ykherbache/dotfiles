@@ -1,0 +1,5 @@
+[tools]
+node = "lts"
+go = "latest"
+bun = "latest"
+pnpm = "latest"

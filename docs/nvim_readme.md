@@ -1,8 +1,3 @@
-### quick readme for stuff required to setup nvim well on new workstation
+Neovim is the `nvim` Stow package (`~/.config/nvim`). `bootstrap/install.sh` links it.
 
-- after creating a symlink from inside configs/nvim to ~/.config/nvim with this command:
-  - "ln -s $(pwd) ~/.config/nvim"
-- on first launch after install, you will see lot of errors, edit the packer.lua file with nvim, source it and install plugins with :PackerInstall
-- there are some packages that will require you to git clone them so they be effective
-  - packer with
-    - git clone --depth 1 https://github.com/wbthomason/packer.nvim\ ~/.local/share/nvim/site/pack/packer/start/packer.nvim
+On first launch, Lazy installs plugins. For Copilot, run `:Copilot auth` once. `:Lazy sync`, `:checkhealth`, and `:Mason` are the health checks. On ARM64 Linux, some Mason binaries are missing; install that language server with dnf or npm instead.
