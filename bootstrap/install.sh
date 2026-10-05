@@ -19,11 +19,12 @@ backup_path() {
     return 0
   fi
   if [ -L "$target" ]; then
-    local dest
-    dest=$(readlink "$target")
-    case $dest in
-      "$ROOT"/*) return 0 ;;
-    esac
+    local resolved
+    resolved=$(realpath "$target" 2>/dev/null || true)
+    # Leave a symlink alone only when it already points at a live file in this repo.
+    if [ -n "$resolved" ] && [[ "$resolved" == "$ROOT/"* ]]; then
+      return 0
+    fi
   fi
   mv "$target" "${target}.bak-dotfiles"
   log "backed up $target"
