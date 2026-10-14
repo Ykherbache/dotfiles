@@ -19,3 +19,12 @@ fuse-libs
 tar
 xz
 fontconfig
+gh
+git-lfs
+awscli2
+uv
+kmonad
+d2
+mkcert
+tilix
+python3

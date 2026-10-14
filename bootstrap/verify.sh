@@ -24,6 +24,36 @@ need fzf
 need rg
 need lsd
 need delta
+need gh
+need git-lfs
+need uvx
+need aws
+
+if [ "$(uname -s)" = "Linux" ]; then
+  if systemctl is-active --quiet kmonad@mba; then
+    ok "kmonad"
+  else
+    bad "kmonad"
+  fi
+  if [ "$(gsettings get org.gnome.desktop.wm.preferences num-workspaces 2>/dev/null || true)" = "13" ]; then
+    ok "gnome workspaces"
+  else
+    bad "gnome workspaces"
+  fi
+fi
+
+if command -v docker >/dev/null 2>&1; then
+  if docker info >/dev/null 2>&1; then
+    ok "docker daemon"
+  else
+    bad "docker daemon (group/login or service)"
+  fi
+  if [ -x "$HOME/.local/bin/epitest" ]; then
+    ok "epitest helper"
+  else
+    bad "epitest helper"
+  fi
+fi
 
 if [ -L "$HOME/.zshrc" ]; then ok "symlink ~/.zshrc"; else bad "symlink ~/.zshrc"; fi
 if [ -L "$HOME/.config/nvim" ]; then ok "symlink ~/.config/nvim"; else bad "symlink ~/.config/nvim"; fi

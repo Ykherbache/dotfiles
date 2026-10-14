@@ -197,7 +197,7 @@ stow_packages() {
 }
 
 link_cursor() {
-  local cursor_user keybindings mcp_source
+  local cursor_user keybindings
   mkdir -p "$HOME/.cursor/skills" "$HOME/.ssh/config.d"
   if [ "$OS" = "Darwin" ]; then
     cursor_user="$HOME/Library/Application Support/Cursor/User"
@@ -236,8 +236,15 @@ PY
     ln -sfn "$ROOT/cursor/mcp.json" "$HOME/.cursor/mcp.json"
   fi
 
-  ln -sfn "$HOME/.agents/skills/find-skills" "$HOME/.cursor/skills/find-skills"
-  ln -sfn "$HOME/.agents/skills/vue-best-practices" "$HOME/.cursor/skills/vue-best-practices"
+  local skill base
+  shopt -s nullglob
+  for skill in "$HOME/.agents/skills"/*; do
+    [ -d "$skill" ] || continue
+    base=$(basename "$skill")
+    backup_path "$HOME/.cursor/skills/$base"
+    ln -sfn "$skill" "$HOME/.cursor/skills/$base"
+  done
+  shopt -u nullglob
 
   if command -v cursor >/dev/null 2>&1; then
     log "installing Cursor extensions"
@@ -255,6 +262,18 @@ link_orbstack_ssh() {
   fi
 }
 
+setup_desktop() {
+  if [ "$OS" != "Linux" ]; then
+    return 0
+  fi
+  if command -v gsettings >/dev/null 2>&1 && [[ "${XDG_CURRENT_DESKTOP:-}" == *GNOME* ]]; then
+    "$ROOT/bootstrap/gnome.sh"
+  else
+    log "no GNOME session; run bootstrap/gnome.sh from one to apply workspaces and terminals"
+  fi
+  "$ROOT/bootstrap/keyboard.sh"
+}
+
 ensure_login_shell() {
   local zsh_path
   zsh_path=$(command -v zsh)
@@ -267,6 +286,9 @@ ensure_login_shell() {
 }
 
 install_packages
+if command -v git-lfs >/dev/null 2>&1; then
+  git lfs install --skip-repo || log "git lfs install failed; run it again after git-lfs is installed"
+fi
 install_oh_my_zsh
 install_zsh_plugins
 install_tpm
@@ -276,6 +298,7 @@ stow_packages
 install_mise
 link_cursor
 link_orbstack_ssh
+setup_desktop
 ensure_login_shell
 
 if [ ! -f "$HOME/.zshrc.local" ]; then

@@ -4,3 +4,5 @@ go = "latest"
 bun = "latest"
 # npm backend: the aqua registry for pnpm returned 400 during setup.
 "npm:pnpm" = "latest"
+lazydocker = "latest"
+terraform = "latest"
