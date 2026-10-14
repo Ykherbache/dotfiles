@@ -14,32 +14,37 @@ vim.g.mapleader = " "
 --   command_mode = "c"
 
 
+-- extra replaces the shared silent opts. Pass {} when the map must not be silent.
+local function map(mode, lhs, rhs, desc, extra)
+  vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", extra or opts, { desc = desc }))
+end
+
 -- space+p+v => vim Explorer
-vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
+map("n", "<leader>pv", vim.cmd.Ex, "File explorer", {})
 
 -- space+enter => source init.lua
-vim.keymap.set("n", "<leader><CR>", ":so ~/.config/nvim/init.lua<CR>", opts)
+map("n", "<leader><CR>", ":so ~/.config/nvim/init.lua<CR>", "Reload config")
 
 -- not working i need to get better at quick lists
-vim.keymap.set("n", "<C-o>", ":copen<CR>", opts)
+map("n", "<C-o>", ":copen<CR>", "Open quickfix")
 
 -- middle of the window, then half a page down
-vim.keymap.set("n", "<C-d>", "M<C-d>", opts)
+map("n", "<C-d>", "M<C-d>", "Half page down")
 
 -- half a page up, then center
-vim.keymap.set("n", "<C-u>", "<C-u>zz", opts)
+map("n", "<C-u>", "<C-u>zz", "Half page up, centered")
 
 -- five lines, like the VS Code vim bindings
-vim.keymap.set("n", "J", "5j", opts)
-vim.keymap.set("n", "K", "5k", opts)
+map("n", "J", "5j", "Down 5 lines")
+map("n", "K", "5k", "Up 5 lines")
 
 -- join lines; noremap so this stays the builtin J
-vim.keymap.set("n", "<leader>j", "J", opts)
+map("n", "<leader>j", "J", "Join lines")
 
 -- command palette
-vim.keymap.set("n", "<leader>p", function()
+map("n", "<leader>p", function()
   require("telescope.builtin").commands()
-end, opts)
+end, "Command palette")
 
 local function jump_diagnostic(direction)
   local diagnostics = vim.diagnostic.get(nil)
@@ -100,57 +105,57 @@ local function jump_diagnostic(direction)
   vim.diagnostic.open_float()
 end
 
-vim.keymap.set("n", "n", function()
+map("n", "n", function()
   jump_diagnostic(1)
-end, opts)
-vim.keymap.set("n", "N", function()
+end, "Next diagnostic")
+map("n", "N", function()
   jump_diagnostic(-1)
-end, opts)
+end, "Previous diagnostic")
 
 --space+s rename occurences
-vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]])
+map("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], "Substitute word", {})
 
 -- space+x make file executable
-vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
+map("n", "<leader>x", "<cmd>!chmod +x %<CR>", "Make file executable", { silent = true })
 
 --map control +c to Escape. that way to have completly same behaviour
-vim.keymap.set("n", "<C-c>", "<Esc>")
+map("n", "<C-c>", "<Esc>", "Escape", {})
 
 --dont use Q
-vim.keymap.set("n", "<Q>", "<nop>")
+map("n", "<Q>", "<nop>", "Disabled", {})
 
 -- open new tmux session with fzf
-vim.keymap.set("n", "<C-f>", ":silent !tmux neww ~/.config/tmux-sessionizer <CR>")
+map("n", "<C-f>", ":silent !tmux neww ~/.config/tmux-sessionizer <CR>", "New tmux session", {})
 
 -- space + f => format file if lsp installed
 --vim.keymap.set("n", "<leader>f", function()
 --    vim.lsp.buf.format()
 --end)
 
-vim.keymap.set("n", "<C-*>", ":e#<CR>", opts)
+map("n", "<C-*>", ":e#<CR>", "Alternate file")
 
-vim.keymap.set("n", "<C-j>", ":cnext<CR>", opts)
-vim.keymap.set("n", "<C-k>", ":cprev<CR>", opts)
+map("n", "<C-j>", ":cnext<CR>", "Next quickfix")
+map("n", "<C-k>", ":cprev<CR>", "Previous quickfix")
 
-vim.keymap.set("n", "<leader>n", ":bn<CR>", opts)
-vim.keymap.set("n", "<leader>b", ":bp<CR>", opts)
+map("n", "<leader>n", ":bn<CR>", "Next buffer")
+map("n", "<leader>b", ":bp<CR>", "Previous buffer")
 -- visual mode remaps
 
 --ability to paste without losing current vim reg content
-vim.keymap.set("x", "<leader>p", "\"_dP", opts)
+map("x", "<leader>p", '"_dP', "Paste without overwriting register")
 
 -- ability to copy to system clipboard vim code
-vim.keymap.set("v", "<leader>y", '"+y', opts)
+map("v", "<leader>y", '"+y', "Yank to clipboard")
 
 --ability to move in visual mode selected line down
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", opts)
+map("v", "J", ":m '>+1<CR>gv=gv", "Move selection down")
 
 --ability to move in visual mode selected line up
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", opts)
+map("v", "K", ":m '<-2<CR>gv=gv", "Move selection up")
 
 -- remap toggle folding to space space
 
-vim.keymap.set("n", "<leader><leader>", ":exe 'normal! za'<CR>", opts)
+map("n", "<leader><leader>", ":exe 'normal! za'<CR>", "Toggle fold")
 
 -- Bottom terminal, same session each time. Ctrl+` never reaches nvim from a
 -- terminal emulator, so Ctrl+\ is the key that actually arrives.
@@ -203,8 +208,8 @@ local function toggle_terminal()
   vim.cmd("startinsert")
 end
 
-vim.keymap.set({ "n", "i", "t" }, "<C-\\>", toggle_terminal, { noremap = true, silent = true, nowait = true })
-vim.keymap.set({ "n", "i", "t" }, "<C-`>", toggle_terminal, { noremap = true, silent = true, nowait = true })
+map({ "n", "i", "t" }, "<C-\\>", toggle_terminal, "Toggle terminal", { noremap = true, silent = true, nowait = true })
+map({ "n", "i", "t" }, "<C-`>", toggle_terminal, "Toggle terminal", { noremap = true, silent = true, nowait = true })
 
 -- :Lsp prints the language servers attached to this buffer
 vim.api.nvim_create_user_command("Lsp", function()

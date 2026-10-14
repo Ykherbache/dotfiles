@@ -4,6 +4,7 @@ return {
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     "hrsh7th/cmp-nvim-lsp",
+    "b0o/SchemaStore.nvim",
   },
   config = function()
     require("mason").setup()
@@ -13,40 +14,47 @@ return {
     local function on_attach(_, bufnr)
       local opts = { buffer = bufnr, noremap = true, silent = true }
 
-      vim.keymap.set("n", "gd", function()
+      local function map(mode, lhs, rhs, desc)
+        vim.keymap.set(mode, lhs, rhs, vim.tbl_extend("force", opts, { desc = desc }))
+      end
+
+      map("n", "<C-t>", function()
+        vim.lsp.buf.hover()
+      end, "Hover")
+      map("n", "gd", function()
         vim.lsp.buf.definition()
-      end, opts)
-      vim.keymap.set("n", "gD", function()
+      end, "Go to definition")
+      map("n", "gD", function()
         vim.lsp.buf.declaration()
-      end, opts)
-      vim.keymap.set("n", "gi", function()
+      end, "Go to declaration")
+      map("n", "gi", function()
         vim.lsp.buf.implementation()
-      end, opts)
-      vim.keymap.set("n", "<F4>", function()
+      end, "Go to implementation")
+      map("n", "<F4>", function()
         vim.lsp.buf.code_action()
-      end, opts)
-      vim.keymap.set("n", "gr", "<cmd>Telescope lsp_references<cr>", { buffer = true })
-      vim.keymap.set("n", "<leader>vws", function()
+      end, "Code action")
+      map("n", "gr", "<cmd>Telescope lsp_references<cr>", "References")
+      map("n", "<leader>vws", function()
         vim.lsp.buf.workspace_symbol()
-      end, opts)
-      vim.keymap.set("n", "<leader>vd", function()
+      end, "Workspace symbol")
+      map("n", "<leader>vd", function()
         vim.diagnostic.open_float()
-      end, opts)
-      vim.keymap.set("n", "[d", function()
+      end, "Line diagnostics")
+      map("n", "[d", function()
         vim.diagnostic.goto_next()
-      end, opts)
-      vim.keymap.set("n", "]d", function()
+      end, "Next diagnostic")
+      map("n", "]d", function()
         vim.diagnostic.goto_prev()
-      end, opts)
-      vim.keymap.set("n", "<leader>vca", function()
+      end, "Previous diagnostic")
+      map("n", "<leader>vca", function()
         vim.lsp.buf.code_action()
-      end, opts)
-      vim.keymap.set("n", "<leader>vrr", function()
+      end, "Code action")
+      map("n", "<leader>vrr", function()
         vim.lsp.buf.references()
-      end, opts)
-      vim.keymap.set("i", "<C-h>", function()
+      end, "References")
+      map("i", "<C-h>", function()
         vim.lsp.buf.signature_help()
-      end, opts)
+      end, "Signature help")
     end
 
     local format_group = vim.api.nvim_create_augroup("Format", { clear = true })
@@ -98,11 +106,27 @@ return {
     vim.keymap.set("n", "<leader>rn", rename_symbol, rename_opts)
     vim.keymap.set("n", "<leader>vrn", rename_symbol, rename_opts)
 
+    -- Vue language server v3 forwards TypeScript work to ts_ls through this plugin.
+    local vue_language_server_path = vim.fn.stdpath("data")
+      .. "/mason/packages/vue-language-server/node_modules/@vue/language-server"
+
     vim.lsp.config("ts_ls", {
       capabilities = capabilities,
-      filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact" },
+      filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
       cmd = { "typescript-language-server", "--stdio" },
+      init_options = {
+        plugins = {
+          {
+            name = "@vue/typescript-plugin",
+            location = vue_language_server_path,
+            languages = { "vue" },
+            configNamespace = "typescript",
+          },
+        },
+      },
     })
+
+    vim.lsp.config("vue_ls", { capabilities = capabilities })
 
     vim.lsp.config("lua_ls", {
       capabilities = capabilities,
@@ -122,6 +146,20 @@ return {
     vim.lsp.config("cssls", { capabilities = capabilities })
     vim.lsp.config("astro", { capabilities = capabilities })
     vim.lsp.config("phpactor", { capabilities = capabilities })
+    vim.lsp.config("dockerls", { capabilities = capabilities })
+
+    -- Schema completion for tsconfig.json and tsconfig*.json.
+    vim.lsp.config("jsonls", {
+      capabilities = capabilities,
+      settings = {
+        json = {
+          schemas = require("schemastore").json.schemas({
+            select = { "tsconfig.json" },
+          }),
+          validate = { enable = true },
+        },
+      },
+    })
 
     -- Attaches only when the project root contains config.yml.
     vim.lsp.config("sqls", {
@@ -146,10 +184,10 @@ return {
     end
 
     require("mason-lspconfig").setup({
-      ensure_installed = { "ts_ls", "lua_ls", "cssls", "astro", "phpactor", "sqls", "postgres_lsp" },
+      ensure_installed = { "ts_ls", "vue_ls", "lua_ls", "cssls", "astro", "phpactor", "sqls", "postgres_lsp", "dockerls", "jsonls" },
     })
 
-    vim.lsp.enable({ "ts_ls", "lua_ls", "cssls", "astro", "phpactor", "sqls", "postgres_lsp" })
+    vim.lsp.enable({ "ts_ls", "vue_ls", "lua_ls", "cssls", "astro", "phpactor", "sqls", "postgres_lsp", "dockerls", "jsonls" })
 
     vim.diagnostic.config({
       virtual_text = {
