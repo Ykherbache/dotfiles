@@ -13,3 +13,6 @@ source "$HOME/.config/zsh/aliases.zsh"
 source "$HOME/.config/zsh/tools.zsh"
 
 [ -f "$HOME/.zshrc.local" ] && source "$HOME/.zshrc.local"
+
+export AWS_PROFILE=new
+

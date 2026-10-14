@@ -4,3 +4,4 @@ node_modules/
 .zshrc.local
 .omc/
 packer_compiled.lua
+claude/.claude/skills/synced/

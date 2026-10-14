@@ -10,7 +10,7 @@ zsh/ nvim/ tmux/ git/ ssh/ scripts/ claude/ agents/ opencode/ mise/ cursor/
 
 ## New machine (Fedora Asahi)
 
-Do this on the Air, with a new SSH key. Do not copy the private key from the Mac.
+Works on the MacBook Air and on the MacBook Pro M1 Pro. Do this after Fedora Asahi Remix (GNOME) is installed, with a new SSH key. Do not copy the private key from the old machine.
 
 ```bash
 ssh-keygen -t ed25519 -C "asahi"
@@ -21,14 +21,22 @@ git clone git@github.com:Yaci016/dotfiles.git ~/personal/github/dotfiles
 cd ~/personal/github/dotfiles
 ./bootstrap/install.sh
 ./bootstrap/install-ai.sh
+./bootstrap/install-docker.sh
 ```
 
-Create `~/.zshrc.local` with a new GitLab token. Revoke the old one first: it used to live in plaintext in `~/.zshrc`.
+`install.sh` links the configs and, from a GNOME session, applies the workspaces, Tilix, and KMonad. Log out and back in so the `docker` group and the new keymap both apply.
+
+Copy these yourself; they are not in the repo:
+
+- `~/.aws/` (the `new` profile named by `AWS_PROFILE`)
+- a GitLab token in `~/.zshrc.local`, which `install.sh` creates empty. Revoke the old token first: it used to live in plaintext in `~/.zshrc`.
 
 ```bash
 chmod 600 ~/.zshrc.local
 # export GITLAB_TOKEN="glpat-..."
 ```
+
+`./bootstrap/move-docker-data.sh` is only for a machine that has an ext4 partition labelled `epitech eu`.
 
 Then sign in:
 
@@ -38,6 +46,47 @@ Then sign in:
 - In Neovim: `:Copilot auth`, then `:Lazy sync`
 
 Check the base setup with `./bootstrap/verify.sh`. In tmux, `prefix + I` installs the plugins.
+
+### Docker + Epitech dump
+
+Docker CE is configured with `./bootstrap/install-docker.sh` (sudo once). It enables the daemon, adds you to the `docker` group, and pulls the Epitech dump image.
+
+```bash
+./bootstrap/install-docker.sh
+newgrp docker   # or log out / log in
+stow -t "$HOME" -R scripts   # if epitest is not already on PATH
+epitest          # shell in the dump, cwd mounted
+epitest make re  # any command
+```
+
+On Asahi (`aarch64`), the official `epitechcontent/epitest-docker` (amd64) does not run because of 16k pages. The script uses `ximaz/epitest-docker-aarch64` instead. Override with `EPITEST_IMAGE=...`. The chosen image is stored in `~/.config/epitest-image`.
+
+On the Air, Docker and containerd data live on the `epitech eu` ext4 partition, mounted at boot on `/mnt/epitech-eu`. `./bootstrap/move-docker-data.sh` sets this up (fstab, `data-root`, containerd `root`, SELinux labels, `RequiresMountsFor`) and removes the old `/var/lib` copies. Skip it when that partition does not exist.
+
+## Keyboard (GNOME)
+
+`keyboard/mba.kbd` is the internal keyboard on Fedora Asahi and on Ubuntu Desktop. KMonad grabs that one device. Hold **K** for left Ctrl, hold **L** for Hyper (left Ctrl, right Shift, left Alt, Super). Hyper plus a letter switches workspace. Left Shift plus Hyper moves the focused window there. A short tap still types the letter.
+
+| Keys | Workspaces |
+| --- | --- |
+| A S D F G | 1–5 |
+| Z X C V | 6–9 |
+| Q W E | 10–12 |
+| R | 13 |
+
+GNOME only has named shortcuts through workspace 12, so R is `switch-to-workspace-last` / `move-to-workspace-last`. That is workspace 13 only while `num-workspaces` stays 13.
+
+The path checked in to `keyboard/mba.kbd` is the MacBook Air M1. `bootstrap/keyboard.sh` links that file when this machine's keyboard matches, and otherwise writes `/etc/kmonad/mba.kbd` with the detected `*-event-kbd` path. `install.sh` runs it. `sudo systemctl restart kmonad@mba` reloads the keymap.
+
+Workspaces, Caps Lock as Escape, the Tilix profile, and the Shell extensions come from `bootstrap/gnome.sh`. `install.sh` runs it when `XDG_CURRENT_DESKTOP` contains `GNOME`. Run it again from a GNOME session if an extension no longer matches the Shell version.
+
+Ubuntu does not ship KMonad. Install the x86_64 binary from the [KMonad releases](https://github.com/kmonad/kmonad/releases) to `/usr/local/bin/kmonad`, then:
+
+```bash
+sudo cp keyboard/kmonad@.service /etc/systemd/system/kmonad@.service
+sudo systemctl daemon-reload
+./bootstrap/keyboard.sh
+```
 
 ## This Mac
 
