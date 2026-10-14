@@ -1,0 +1,74 @@
+(defcfg
+  ;; Apple SPI Keyboard on the MacBook Air M1. Only this device is grabbed.
+  ;; On another machine, replace this with that keyboard's …-event-kbd path.
+  input  (device-file "/dev/input/by-path/platform-23510c000.spi-cs-0-event-kbd")
+  output (uinput-sink "KMonad MacBook Air")
+  fallthrough true
+)
+
+(defsrc
+  lsft k l
+  a    s d f g
+  z    x c v
+  q    w e r
+)
+
+(defalias
+  ;; Tap = k. Hold past 200ms = left Ctrl.
+  kctrl (tap-hold 200 k lctl)
+
+  ;; Left Shift still types capitals, and while it is held L becomes
+  ;; the move variant of Hyper (so Shift can be pressed before L).
+  sft (around lsft (layer-toggle shifted))
+
+  ;; Tap = l. Hold past 200ms = Hyper:
+  ;; left Ctrl + right Shift + left Alt + left Super.
+  ;; Right Shift leaves left Shift free for "move window".
+  lhyper (tap-hold 200 l (around lctl (around rsft (around lalt (around lmet (layer-toggle hyper))))))
+  lhyper-move (tap-hold 200 l (around lctl (around rsft (around lalt (around lmet (layer-toggle hmove))))))
+
+  ;; Hyper already holds Shift, so an extra left Shift is invisible to GNOME.
+  ;; Drop Ctrl for the tap: Shift+Alt+Super+letter moves the window,
+  ;; then Ctrl is pressed again so Hyper+letter still switches workspace.
+  mva (tap-macro (release-only lctl) P30 (around a P40) P30 (press-only lctl))
+  mvs (tap-macro (release-only lctl) P30 (around s P40) P30 (press-only lctl))
+  mvd (tap-macro (release-only lctl) P30 (around d P40) P30 (press-only lctl))
+  mvf (tap-macro (release-only lctl) P30 (around f P40) P30 (press-only lctl))
+  mvg (tap-macro (release-only lctl) P30 (around g P40) P30 (press-only lctl))
+  mvz (tap-macro (release-only lctl) P30 (around z P40) P30 (press-only lctl))
+  mvx (tap-macro (release-only lctl) P30 (around x P40) P30 (press-only lctl))
+  mvc (tap-macro (release-only lctl) P30 (around c P40) P30 (press-only lctl))
+  mvv (tap-macro (release-only lctl) P30 (around v P40) P30 (press-only lctl))
+  mvq (tap-macro (release-only lctl) P30 (around q P40) P30 (press-only lctl))
+  mvw (tap-macro (release-only lctl) P30 (around w P40) P30 (press-only lctl))
+  mve (tap-macro (release-only lctl) P30 (around e P40) P30 (press-only lctl))
+  mvr (tap-macro (release-only lctl) P30 (around r P40) P30 (press-only lctl))
+)
+
+(deflayer base
+  @sft @kctrl @lhyper
+  a    s      d       f g
+  z    x      c       v
+  q    w      e       r
+)
+
+(deflayer shifted
+  _    @kctrl @lhyper-move
+  _    _      _       _ _
+  _    _      _       _
+  _    _      _       _
+)
+
+(deflayer hyper
+  (layer-toggle hmove) _ _
+  _ _ _ _ _
+  _ _ _ _
+  _ _ _ _
+)
+
+(deflayer hmove
+  _ _ _
+  @mva @mvs @mvd @mvf @mvg
+  @mvz @mvx @mvc @mvv
+  @mvq @mvw @mve @mvr
+)

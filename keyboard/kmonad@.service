@@ -1,0 +1,10 @@
+[Unit]
+Description=KMonad keyboard config
+
+[Service]
+ExecStart=/usr/local/bin/kmonad /etc/kmonad/%i.kbd
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

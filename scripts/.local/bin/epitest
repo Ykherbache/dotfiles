@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Run a command (or an interactive shell) inside the Epitech epitest container.
+# Mounts the current directory at /home/epitech and drops you there.
+set -euo pipefail
+
+IMAGE_FILE=${EPITEST_IMAGE_FILE:-$HOME/.config/epitest-image}
+if [ -n "${EPITEST_IMAGE:-}" ]; then
+  IMAGE=$EPITEST_IMAGE
+elif [ -f "$IMAGE_FILE" ]; then
+  IMAGE=$(tr -d '[:space:]' < "$IMAGE_FILE")
+elif [ "$(uname -m)" = "aarch64" ]; then
+  IMAGE=ximaz/epitest-docker-aarch64:latest
+else
+  IMAGE=epitechcontent/epitest-docker:latest
+fi
+
+ARCH=$(uname -m)
+PLATFORM_ARGS=()
+case $IMAGE in
+  *epitest-docker-aarch64*) ;;
+  *epitechcontent/epitest-docker*)
+    if [ "$ARCH" = "aarch64" ]; then
+      PLATFORM_ARGS=(--platform linux/amd64)
+    fi
+    ;;
+esac
+
+WORKDIR=${EPITEST_WORKDIR:-/home/epitech}
+HOST_DIR=$(pwd -P)
+
+DOCKER=(docker)
+if ! docker info >/dev/null 2>&1; then
+  if sudo -n docker info >/dev/null 2>&1; then
+    DOCKER=(sudo docker)
+  else
+    echo "Cannot talk to Docker. Add yourself to the docker group, then re-login:" >&2
+    echo "  sudo usermod -aG docker \"\$USER\" && newgrp docker" >&2
+    exit 1
+  fi
+fi
+
+if [ "$#" -eq 0 ]; then
+  set -- bash
+fi
+
+TTY_ARGS=()
+if [ -t 0 ] && [ -t 1 ]; then
+  TTY_ARGS=(-it)
+elif [ -t 1 ]; then
+  TTY_ARGS=(-t)
+fi
+
+exec "${DOCKER[@]}" run --rm "${TTY_ARGS[@]}" \
+  "${PLATFORM_ARGS[@]}" \
+  -v "$HOST_DIR:$WORKDIR" \
+  -w "$WORKDIR" \
+  -e TERM \
+  "$IMAGE" \
+  "$@"
