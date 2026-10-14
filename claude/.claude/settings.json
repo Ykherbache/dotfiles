@@ -4,7 +4,7 @@
       "mcp__pencil"
     ]
   },
-  "model": "opus",
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -48,6 +48,8 @@
   "pluginConfigs": {},
   "autoUpdatesChannel": "stable",
   "tui": "fullscreen",
+  "theme": "dark",
   "preferredNotifChannel": "iterm2_with_bell",
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true,
+  "editorMode": "vim"
 }
