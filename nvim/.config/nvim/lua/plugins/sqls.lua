@@ -14,7 +14,7 @@ return {
         -- space+e runs the statement under the cursor. A visual selection runs those lines.
         vim.keymap.set("n", "<leader>e", function()
           require("yac.sql_run").current()
-        end, opts)
+        end, vim.tbl_extend("force", opts, { desc = "Run SQL statement" }))
         vim.keymap.set("x", "<leader>e", function()
           local first = vim.fn.getpos("v")[2]
           local last = vim.fn.getcurpos()[2]
@@ -22,7 +22,7 @@ return {
             first, last = last, first
           end
           require("yac.sql_run").lines(first, last)
-        end, opts)
+        end, vim.tbl_extend("force", opts, { desc = "Run selected SQL" }))
       end,
     })
   end,

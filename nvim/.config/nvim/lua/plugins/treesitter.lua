@@ -17,14 +17,17 @@ return {
       "yaml",
       "css",
       "html",
+      "vue",
       "lua",
       "vim",
       "go",
       "rust",
+      "sql",
     }
 
     require("nvim-treesitter").install(parsers)
     vim.treesitter.language.register("tsx", { "javascriptreact", "typescriptreact", "typescript.tsx" })
+    vim.treesitter.language.register("json", "jsonc")
     require("nvim-ts-autotag").setup({})
 
     vim.api.nvim_create_autocmd("FileType", {
@@ -38,13 +41,16 @@ return {
         "fish",
         "php",
         "json",
+        "jsonc",
         "yaml",
         "css",
         "html",
+        "vue",
         "lua",
         "vim",
         "go",
         "rust",
+        "sql",
       },
       callback = function()
         if not pcall(vim.treesitter.start) then
