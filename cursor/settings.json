@@ -255,5 +255,10 @@
     "workbench.reduceMotion": "off",
     "cursor.general.emailPrivacyEnabled": true,
     "cursor.composer.usageSummaryDisplay": "always",
-    "workbench.preferredHighContrastColorTheme": "Tomorrow Night Blue"
+    "workbench.preferredHighContrastColorTheme": "Tomorrow Night Blue",
+    "cursor.cpp.disabledLanguages": [
+        "plaintext",
+        "markdown",
+        "scminput"
+    ]
 }
