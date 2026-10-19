@@ -22,6 +22,19 @@ end
 -- space+p+v => vim Explorer
 map("n", "<leader>pv", vim.cmd.Ex, "File explorer", {})
 
+-- In netrw: d = new directory, f = new file (stock netrw uses %)
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "netrw",
+  group = vim.api.nvim_create_augroup("NetrwMaps", { clear = true }),
+  callback = function(event)
+    vim.keymap.set("n", "f", "%", {
+      buffer = event.buf,
+      remap = true,
+      desc = "Create file",
+    })
+  end,
+})
+
 -- space+enter => source init.lua
 map("n", "<leader><CR>", ":so ~/.config/nvim/init.lua<CR>", "Reload config")
 
@@ -127,15 +140,179 @@ map("n", "<Q>", "<nop>", "Disabled", {})
 -- open new tmux session with fzf
 map("n", "<C-f>", ":silent !tmux neww ~/.config/tmux-sessionizer <CR>", "New tmux session", {})
 
--- space + f => format file if lsp installed
---vim.keymap.set("n", "<leader>f", function()
---    vim.lsp.buf.format()
---end)
-
 map("n", "<C-*>", ":e#<CR>", "Alternate file")
 
 map("n", "<C-j>", ":cnext<CR>", "Next quickfix")
 map("n", "<C-k>", ":cprev<CR>", "Previous quickfix")
+
+-- Moving in the list from gd keeps the file you came from on that line.
+-- Enter jumps there and closes the list.
+local function list_info(winid)
+  if not vim.api.nvim_win_is_valid(winid) then
+    return nil
+  end
+  local info = vim.fn.getwininfo(winid)[1]
+  if info == nil or info.quickfix ~= 1 then
+    return nil
+  end
+  return info
+end
+
+local function list_is_loclist(winid)
+  local info = list_info(winid)
+  return info ~= nil and info.loclist == 1
+end
+
+local function list_items(winid)
+  if list_is_loclist(winid) then
+    return vim.fn.getloclist(winid)
+  end
+  return vim.fn.getqflist()
+end
+
+local function file_window(winid, list_win)
+  if winid == 0 or winid == list_win or not vim.api.nvim_win_is_valid(winid) then
+    return false
+  end
+  local info = vim.fn.getwininfo(winid)[1]
+  if info == nil or info.quickfix == 1 then
+    return false
+  end
+  return vim.bo[vim.api.nvim_win_get_buf(winid)].buftype == ""
+end
+
+local function origin_window(list_win)
+  local prev = vim.fn.win_getid(vim.fn.winnr("#"))
+  if file_window(prev, list_win) then
+    return prev
+  end
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    if file_window(win, list_win) then
+      return win
+    end
+  end
+end
+
+local function list_entry(winid)
+  local items = list_items(winid)
+  local item = items[vim.api.nvim_win_get_cursor(winid)[1]]
+  if item == nil or item.valid == 0 then
+    return nil
+  end
+  return item
+end
+
+local function entry_buffer(item)
+  local buf = item.bufnr
+  if buf ~= nil and buf ~= 0 and vim.api.nvim_buf_is_valid(buf) then
+    return buf
+  end
+  if item.filename == nil or item.filename == "" then
+    return nil
+  end
+  local added = vim.fn.bufadd(item.filename)
+  if added == 0 or not vim.api.nvim_buf_is_valid(added) then
+    return nil
+  end
+  return added
+end
+
+local function close_list(winid)
+  if list_is_loclist(winid) then
+    vim.cmd.lclose()
+  else
+    vim.cmd.cclose()
+  end
+end
+
+local showing_list_entry = false
+
+local function show_list_entry(close_after)
+  if showing_list_entry then
+    return false
+  end
+
+  local list_win = vim.api.nvim_get_current_win()
+  if list_info(list_win) == nil then
+    return false
+  end
+  local item = list_entry(list_win)
+  local origin = origin_window(list_win)
+  if item == nil or origin == nil then
+    return false
+  end
+  local buf = entry_buffer(item)
+  if buf == nil then
+    return false
+  end
+
+  showing_list_entry = true
+  local shown = pcall(function()
+    vim.fn.bufload(buf)
+    vim.bo[buf].buflisted = true
+    vim.api.nvim_win_set_buf(origin, buf)
+    local last = vim.api.nvim_buf_line_count(buf)
+    local lnum = item.lnum or 1
+    if lnum < 1 then
+      lnum = 1
+    end
+    if last > 0 and lnum > last then
+      lnum = last
+    end
+    local text = vim.api.nvim_buf_get_lines(buf, lnum - 1, lnum, false)[1] or ""
+    local col = math.max((item.col or 1) - 1, 0)
+    if col > #text then
+      col = #text
+    end
+    vim.api.nvim_win_set_cursor(origin, { lnum, col })
+    vim.api.nvim_win_call(origin, function()
+      vim.cmd("normal! zvzz")
+    end)
+  end)
+
+  if shown and close_after then
+    local jumped = pcall(function()
+      close_list(list_win)
+      if vim.api.nvim_win_is_valid(origin) then
+        vim.api.nvim_set_current_win(origin)
+      end
+    end)
+    shown = jumped
+  end
+  showing_list_entry = false
+  return shown
+end
+
+local qf_follow = vim.api.nvim_create_augroup("QfFollow", { clear = true })
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  group = qf_follow,
+  callback = function(event)
+    local opts = { buffer = event.buf, silent = true }
+    vim.keymap.set("n", "<CR>", function()
+      show_list_entry(true)
+    end, vim.tbl_extend("force", opts, { desc = "Jump and close list" }))
+    vim.keymap.set("n", "q", function()
+      local winid = vim.api.nvim_get_current_win()
+      if list_info(winid) == nil then
+        return
+      end
+      close_list(winid)
+    end, vim.tbl_extend("force", opts, { desc = "Close list" }))
+    vim.keymap.set("n", "<C-j>", "j", vim.tbl_extend("force", opts, { desc = "Next list item" }))
+    vim.keymap.set("n", "<C-k>", "k", vim.tbl_extend("force", opts, { desc = "Previous list item" }))
+
+    vim.api.nvim_clear_autocmds({ group = qf_follow, buffer = event.buf })
+    vim.api.nvim_create_autocmd("CursorMoved", {
+      buffer = event.buf,
+      group = qf_follow,
+      callback = function()
+        show_list_entry(false)
+      end,
+    })
+  end,
+})
 
 map("n", "<leader>n", ":bn<CR>", "Next buffer")
 map("n", "<leader>b", ":bp<CR>", "Previous buffer")
@@ -159,7 +336,10 @@ map("n", "<leader><leader>", ":exe 'normal! za'<CR>", "Toggle fold")
 
 -- Bottom terminal, same session each time. Ctrl+` never reaches nvim from a
 -- terminal emulator, so Ctrl+\ is the key that actually arrives.
-local terminal = { buf = nil }
+-- Ctrl+w z grows that split to nearly the full height and shrinks it back.
+-- Ctrl+j / Ctrl+k scroll a long agent reply; i or a returns to the prompt.
+local terminal = { buf = nil, zoomed = false }
+local TERMINAL_HEIGHT = 12
 
 local function terminal_running(buf)
   if not buf or not vim.api.nvim_buf_is_valid(buf) or vim.bo[buf].buftype ~= "terminal" then
@@ -186,6 +366,62 @@ local function terminal_window()
   end
 end
 
+-- Directory of the file in the current window. :terminal otherwise inherits
+-- Neovim's launch directory, which stays at the project root.
+local function buffer_directory()
+  local name = vim.api.nvim_buf_get_name(0)
+  if name == "" then
+    return vim.fn.getcwd()
+  end
+  if vim.fn.isdirectory(name) == 1 then
+    return vim.fn.fnamemodify(name, ":p")
+  end
+  local dir = vim.fn.fnamemodify(name, ":p:h")
+  if vim.fn.isdirectory(dir) == 0 then
+    return vim.fn.getcwd()
+  end
+  return dir
+end
+
+local function terminal_max_height()
+  return math.max(TERMINAL_HEIGHT, vim.o.lines - 2)
+end
+
+local function terminal_split_height()
+  if terminal.zoomed then
+    return terminal_max_height()
+  end
+  return TERMINAL_HEIGHT
+end
+
+-- Half the window, so a short split and a zoomed one both move by a readable step.
+local function scroll_terminal_keys(direction)
+  local count = math.max(1, math.floor(vim.api.nvim_win_get_height(0) / 2))
+  local motion = direction > 0 and "j" or "k"
+  if vim.fn.mode() == "t" then
+    return "<C-\\><C-n>" .. count .. motion
+  end
+  return count .. motion
+end
+
+local function bind_terminal_buffer(buf)
+  local scroll_opts = { buffer = buf, expr = true, silent = true, replace_keycodes = true }
+  vim.keymap.set("n", "<C-j>", function()
+    return scroll_terminal_keys(1)
+  end, vim.tbl_extend("force", scroll_opts, { desc = "Scroll terminal down" }))
+  vim.keymap.set("n", "<C-k>", function()
+    return scroll_terminal_keys(-1)
+  end, vim.tbl_extend("force", scroll_opts, { desc = "Scroll terminal up" }))
+end
+
+local function prepare_terminal_window()
+  vim.wo.number = false
+  vim.wo.relativenumber = false
+  vim.wo.signcolumn = "no"
+  -- Global scrolloff is 8, which pins a short terminal to the last lines.
+  vim.wo.scrolloff = 0
+end
+
 local function toggle_terminal()
   local win = terminal_window()
   if win then
@@ -193,23 +429,95 @@ local function toggle_terminal()
     return
   end
 
-  vim.cmd("botright 12split")
+  local dir = buffer_directory()
+  vim.cmd("botright " .. terminal_split_height() .. "split")
   if terminal_running(terminal.buf) then
     vim.api.nvim_win_set_buf(0, terminal.buf)
   else
+    vim.cmd.lcd(dir)
     vim.cmd("terminal")
     terminal.buf = vim.api.nvim_get_current_buf()
     vim.bo.buflisted = false
+    vim.bo.scrollback = 100000
   end
 
-  vim.wo.number = false
-  vim.wo.relativenumber = false
-  vim.wo.signcolumn = "no"
+  bind_terminal_buffer(vim.api.nvim_get_current_buf())
+  prepare_terminal_window()
   vim.cmd("startinsert")
+end
+
+local function toggle_terminal_zoom()
+  local win = terminal_window()
+  if not win then
+    return
+  end
+
+  terminal.zoomed = not terminal.zoomed
+  vim.api.nvim_win_set_height(win, terminal_split_height())
 end
 
 map({ "n", "i", "t" }, "<C-\\>", toggle_terminal, "Toggle terminal", { noremap = true, silent = true, nowait = true })
 map({ "n", "i", "t" }, "<C-`>", toggle_terminal, "Toggle terminal", { noremap = true, silent = true, nowait = true })
+map({ "n", "t" }, "<C-w>z", toggle_terminal_zoom, "Maximize or minimize terminal")
+map("t", "<C-j>", function()
+  return scroll_terminal_keys(1)
+end, "Scroll terminal down", { expr = true, replace_keycodes = true })
+map("t", "<C-k>", function()
+  return scroll_terminal_keys(-1)
+end, "Scroll terminal up", { expr = true, replace_keycodes = true })
+
+-- space+l+o starts the lofi stream, and the same keys stop it.
+-- mpv is detached, so the music keeps playing after Neovim exits.
+local lofi_url = "https://www.youtube.com/watch?v=rFZHOHl-L8A"
+local lofi_pid_file = vim.fn.stdpath("state") .. "/lofi.pid"
+
+local function lofi_pid()
+  if vim.fn.filereadable(lofi_pid_file) == 0 then
+    return nil
+  end
+
+  local pid = tonumber(vim.fn.readfile(lofi_pid_file)[1])
+  if not pid then
+    vim.fn.delete(lofi_pid_file)
+    return nil
+  end
+
+  local name = vim.trim(vim.fn.system({ "ps", "-p", tostring(pid), "-o", "comm=" }))
+  if vim.v.shell_error ~= 0 or name ~= "mpv" then
+    vim.fn.delete(lofi_pid_file)
+    return nil
+  end
+
+  return pid
+end
+
+local function toggle_lofi()
+  local pid = lofi_pid()
+  if pid then
+    vim.fn.system({ "kill", tostring(pid) })
+    vim.fn.delete(lofi_pid_file)
+    vim.notify("Lofi stopped")
+    return
+  end
+
+  local job = vim.fn.jobstart({
+    "mpv",
+    "--no-video",
+    "--really-quiet",
+    "--no-terminal",
+    lofi_url,
+  }, { detach = true })
+
+  if job <= 0 then
+    vim.notify("Could not start mpv", vim.log.levels.ERROR)
+    return
+  end
+
+  vim.fn.writefile({ tostring(vim.fn.jobpid(job)) }, lofi_pid_file)
+  vim.notify("Lofi started")
+end
+
+map("n", "<leader>lo", toggle_lofi, "Toggle lofi radio")
 
 -- :Lsp prints the language servers attached to this buffer
 vim.api.nvim_create_user_command("Lsp", function()

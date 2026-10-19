@@ -1,13 +1,31 @@
 local prettier_filetypes = {
   "css",
-  "javascript",
-  "javascriptreact",
-  "typescript",
-  "typescriptreact",
   "json",
   "scss",
   "less",
 }
+
+local eslint_filetypes = {
+  "javascript",
+  "javascriptreact",
+  "typescript",
+  "typescriptreact",
+  "vue",
+}
+
+local eslint_config_markers = {
+  "eslint.config.js",
+  "eslint.config.mjs",
+  "eslint.config.cjs",
+  "eslint.config.ts",
+}
+
+local function js_formatter(bufnr)
+  if vim.fs.root(bufnr, eslint_config_markers) then
+    return { "eslint_d" }
+  end
+  return { "prettierd" }
+end
 
 return {
   {
@@ -36,6 +54,9 @@ return {
       for _, ft in ipairs(prettier_filetypes) do
         formatters_by_ft[ft] = { "prettierd" }
       end
+      for _, ft in ipairs(eslint_filetypes) do
+        formatters_by_ft[ft] = js_formatter
+      end
 
       require("conform").setup({
         formatters_by_ft = formatters_by_ft,
@@ -43,9 +64,25 @@ return {
           if vim.b[bufnr].disable_autoformat then
             return
           end
-          return { timeout_ms = 500, lsp_format = "never" }
+          return { timeout_ms = 3000, lsp_format = "never" }
         end,
       })
+
+      -- Same split as save: conform when it has a formatter, otherwise the Lua server.
+      -- An explicit format still runs when autoformat is disabled for the buffer.
+      vim.keymap.set("n", "<leader>f", function()
+        local bufnr = vim.api.nvim_get_current_buf()
+        local conform = require("conform")
+        if #conform.list_formatters(bufnr) > 0 then
+          conform.format({ async = true, bufnr = bufnr, lsp_format = "never" })
+          return
+        end
+        if vim.bo[bufnr].filetype == "lua" then
+          vim.lsp.buf.format({ async = true, bufnr = bufnr })
+          return
+        end
+        vim.notify("No formatter for this file", vim.log.levels.WARN)
+      end, { desc = "Format file" })
 
       vim.api.nvim_create_user_command("DisableLspFormatting", function()
         vim.b.disable_autoformat = true
@@ -76,6 +113,7 @@ return {
         javascriptreact = { "eslint_d" },
         typescript = { "eslint_d" },
         typescriptreact = { "eslint_d" },
+        vue = { "eslint_d" },
         fish = { "fish" },
         php = { "php" },
       }
