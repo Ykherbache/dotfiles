@@ -23,6 +23,7 @@ return {
       "go",
       "rust",
       "sql",
+      "python",
     }
 
     require("nvim-treesitter").install(parsers)
@@ -51,6 +52,7 @@ return {
         "go",
         "rust",
         "sql",
+        "python",
       },
       callback = function()
         if not pcall(vim.treesitter.start) then

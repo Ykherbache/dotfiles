@@ -1,0 +1,45 @@
+{
+  "version": 1.1,
+  "atDirectives": [
+    {
+      "name": "@theme",
+      "description": "Tailwind v4. Defines design tokens as CSS variables, including `@theme inline` so utilities read the variables at render time."
+    },
+    {
+      "name": "@apply",
+      "description": "Tailwind. Inlines utility classes into a rule."    },
+    {
+      "name": "@utility",
+      "description": "Tailwind v4. Defines a custom utility class."    },
+    {
+      "name": "@custom-variant",
+      "description": "Tailwind v4. Defines a custom variant, for example `@custom-variant dark (&:is(.dark *))`."    },
+    {
+      "name": "@variant",
+      "description": "Tailwind v4. Applies a variant to the declarations in its block."    },
+    {
+      "name": "@source",
+      "description": "Tailwind v4. Adds a source path for class detection."    },
+    {
+      "name": "@plugin",
+      "description": "Tailwind v4. Loads a plugin from CSS."    },
+    {
+      "name": "@config",
+      "description": "Tailwind. Points at a JavaScript config file."    },
+    {
+      "name": "@reference",
+      "description": "Tailwind v4. Imports theme variables, custom utilities, and variants without emitting the imported CSS."    },
+    {
+      "name": "@tailwind",
+      "description": "Tailwind v3. Injects base, components, or utilities."    },
+    {
+      "name": "@screen",
+      "description": "Tailwind v3. Media query for a named breakpoint."    },
+    {
+      "name": "@responsive",
+      "description": "Tailwind v3. Generates responsive variants of the rules in its block."    },
+    {
+      "name": "@variants",
+      "description": "Tailwind v3. Generates the listed variants of the rules in its block."    }
+  ]
+}
