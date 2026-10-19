@@ -27,3 +27,9 @@
 [credential "https://gist.github.com"]
 	helper = 
 	helper = !gh auth git-credential
+[credential "https://origin.cursor.com/git"]
+	helper = 
+	helper = !/home/yacinekherbache/.local/bin/origin credential-helper
+[credential "https://origin.cursor.com"]
+	helper = 
+	helper = !/home/yacinekherbache/.local/bin/origin credential-helper
