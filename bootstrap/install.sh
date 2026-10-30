@@ -194,6 +194,12 @@ stow_packages() {
     log "stowing $package"
     stow -t "$HOME" -R "$package"
   done
+  if [ "$OS" != "Darwin" ]; then
+    log "stowing systemd"
+    stow -t "$HOME" -R systemd
+    systemctl --user daemon-reload
+    systemctl --user enable rtk-proxy.service
+  fi
 }
 
 link_cursor() {
@@ -268,8 +274,10 @@ setup_desktop() {
   fi
   if command -v gsettings >/dev/null 2>&1 && [[ "${XDG_CURRENT_DESKTOP:-}" == *GNOME* ]]; then
     "$ROOT/bootstrap/gnome.sh"
+  elif command -v kwriteconfig6 >/dev/null 2>&1 && [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]]; then
+    "$ROOT/bootstrap/kde.sh"
   else
-    log "no GNOME session; run bootstrap/gnome.sh from one to apply workspaces and terminals"
+    log "no GNOME or KDE session; run bootstrap/gnome.sh or bootstrap/kde.sh from one"
   fi
   "$ROOT/bootstrap/keyboard.sh"
 }
