@@ -6,7 +6,9 @@
   fallthrough true
 )
 
+;; Caps Lock is Escape, so Vim leaves insert mode without leaving the home row.
 (defsrc
+  caps
   lsft k l
   a    s d f g
   z    x c v
@@ -46,6 +48,7 @@
 )
 
 (deflayer base
+  esc
   @sft @kctrl @lhyper
   a    s      d       f g
   z    x      c       v
@@ -53,6 +56,7 @@
 )
 
 (deflayer shifted
+  _
   _    @kctrl @lhyper-move
   _    _      _       _ _
   _    _      _       _
@@ -60,6 +64,7 @@
 )
 
 (deflayer hyper
+  _
   (layer-toggle hmove) _ _
   _ _ _ _ _
   _ _ _ _
@@ -67,6 +72,7 @@
 )
 
 (deflayer hmove
+  _
   _ _ _
   @mva @mvs @mvd @mvf @mvg
   @mvz @mvx @mvc @mvv

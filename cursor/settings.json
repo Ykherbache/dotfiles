@@ -244,6 +244,12 @@
             ]
         }
     ],
+    "vim.handleKeys": {
+        "<C-d>": true,
+        "<C-s>": false,
+        "<C-z>": false,
+        "<C-p>": false
+    },
     "github.copilot.enable": {
         "*": true,
         "plaintext": false,

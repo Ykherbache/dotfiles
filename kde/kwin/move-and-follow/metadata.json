@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Description": "Move the active window to a desktop and switch there with it",
+        "EnabledByDefault": false,
+        "Id": "move-and-follow",
+        "License": "MIT",
+        "Name": "Move and Follow"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

@@ -1,10 +1,13 @@
 {
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8787"
+  },
   "permissions": {
     "allow": [
       "mcp__pencil"
     ]
   },
-  "model": "sonnet",
+  "model": "opusplan",
   "hooks": {
     "PreToolUse": [
       {
@@ -15,6 +18,25 @@
             "command": "if command -v rtk >/dev/null 2>&1; then rtk hook claude; else cat >/dev/null; fi"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "rtk hook claude"
+          }
+        ]
       }
     ]
   },
@@ -23,7 +45,6 @@
     "command": "bash $HOME/.claude/statusline-command.sh"
   },
   "enabledPlugins": {
-    "posthog@claude-plugins-official": true,
     "frontend-design@claude-plugins-official": true,
     "oh-my-claudecode@omc": true,
     "swift-lsp@claude-plugins-official": true,
@@ -49,7 +70,36 @@
   "autoUpdatesChannel": "stable",
   "tui": "fullscreen",
   "theme": "dark",
+  "editorMode": "vim",
   "preferredNotifChannel": "iterm2_with_bell",
   "agentPushNotifEnabled": true,
-  "editorMode": "vim"
+  "autoMode": {
+    "environment": [
+      "### Org-wide",
+      "**Organization**: None configured — repo is under the `EpitechMscProPromo2028` GitHub org (school project), no broader org infra confirmed",
+      "**Cloud provider(s)**: AWS (EC2, ECR, EventBridge scheduler, Cloudflare in front) — per `infra/provisioning-infra-tf/` (ec2.tf, ecr.tf, scheduler.tf, cloudflare.tf, budget.tf, network.tf) and CLAUDE.md's deploy section",
+      "**Repository visibility**: Private — `EpitechMscProPromo2028/T-DEV-700-PAR-7-1-time_manager-35` (confirmed via gh)",
+      "**Internal sharing / snippet hosting**: None configured — treat public paste/gist services as outside the trust boundary",
+      "**Secrets management**: 1Password CLI (`op`, 6× in this project's transcripts) and Azure CLI (`az`, 3×); `.env`/`.env.*` gitignored with `.env.example`/`.env.staging.example` tracked as templates; Keycloak client secrets (`KC_API_CLIENT_SECRET`, `KC_SCHEDULER_CLIENT_SECRET`, Microsoft Entra credentials) are never committed per CLAUDE.md",
+      "**Default / protected branches**: `main` (default); no rulesets or classic branch protection listed by gh",
+      "**CI/CD deploy targets**: Staging on a single EC2 instance behind Cloudflare at `time-manager-36.tech`, provisioned by Terraform in `infra/provisioning-infra-tf/`; Docker builds use the repo root as context; GitHub Actions CI at `.github/workflows/ci.yml`",
+      "**Network posture**: None configured",
+      "**Host containment**: None configured — assume Claude Code runs on an ordinary developer machine with open internet",
+      "**Source control**: The trusted repo (`EpitechMscProPromo2028/T-DEV-700-PAR-7-1-time_manager-35`) and its `origin` remote only — private repo, no additional orgs configured",
+      "**Trusted internal domains**: `time-manager-36.tech` (staging host, contacted 2× in this project's transcripts)",
+      "**Trusted cloud buckets**: None configured",
+      "**Key internal services**: Keycloak (realm `time-manager`, internal `KEYCLOAK_URL` and public `KEYCLOAK_ISSUER`), Postgres (local/staging), Mailpit (dev email capture)",
+      "**Internal package registry**: None configured — pnpm only, no private registry evidence",
+      "**Sensitive data locations & audiences**: `.env`, `.env.*` (gitignored; `.env.example`/`.env.staging.example` are templates only), `src/backend/.env.example`, `src/frontend/.env.example`, `infra/provisioning-infra-tf/terraform.tfvars.example` and `.terraform.lock.hcl` — any real values stay local/staging-only, never committed; Keycloak client secrets and Microsoft Entra credentials",
+      "**Data retention / declassification**: None configured",
+      "**Sensitive remote targets**: Any namespace/host containing `prod`/`production` as a whole word or segment (none currently named in this repo's config — staging is the only deploy target seen)",
+      "**Protected deployment namespaces / environments**: None configured — fall back to the Sensitive remote targets heuristic",
+      "**Protected IaC scopes**: IAM, RBAC, networking, quota, and node-pool resources under `infra/provisioning-infra-tf/` (ec2.tf, ecr.tf, network.tf, scheduler.tf, cloudflare.tf); anything whose name or tag carries `prod`/`production`",
+      "### User-specific",
+      "**Primary use of Claude Code**: software development (this repo: Express API + Vue app + Postgres + nginx, Epitech school project)",
+      "**Trusted repo**: `~/school/time-manager` (`EpitechMscProPromo2028/T-DEV-700-PAR-7-1-time_manager-35`), private, `origin` remote only",
+      "**Org-specific CLIs**: None confirmed — `op` and `az` seen in transcripts are credential/cloud tooling, not org-specific wrappers; `rtk` seen in both this project's transcripts and shell history but its purpose is not documented in gathered files",
+      "**Routine under this repo's prefix**: pnpm workspace commands (`pnpm dev:api`, `pnpm dev:web`, `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm --filter <app> ...`), Docker Compose for local Postgres/Keycloak, and lefthook-managed git hooks are routine in this repo"
+    ]
+  }
 }
