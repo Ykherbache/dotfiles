@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+# See and free the RAM held by local LLMs (Ollama models, the SearXNG container).
+#
+#   llm ps                      loaded models, RAM, services
+#   llm free [model...]         unload every loaded model (or just the ones named)
+#   llm free --all [model...]   same, and stop the SearXNG container too
+#   llm warm <model>            load a model now, so the cold start happens when you choose
+#
+# Works on Fedora Asahi and macOS; it only needs the `ollama` CLI.
+set -euo pipefail
+
+KEEP_ALIVE=${LLM_KEEP_ALIVE:-30m}
+WAIT_SECONDS=${LLM_FREE_WAIT:-15}
+
+usage() { sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; }
+die() { printf 'llm: %s\n' "$*" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+# ---------------------------------------------------------------- memory ----
+# "Available" = what a new process can get without swapping (MemAvailable on
+# Linux; free + inactive + speculative pages on macOS, which is approximate).
+mem_available_mb() {
+  if [ "$(uname -s)" = "Darwin" ]; then
+    vm_stat | awk '
+      /page size of/ { size = $8 }
+      /Pages free/ { free = $3 }
+      /Pages inactive/ { inactive = $3 }
+      /Pages speculative/ { spec = $3 }
+      END { gsub(/\./, "", free); gsub(/\./, "", inactive); gsub(/\./, "", spec);
+            printf "%d\n", (free + inactive + spec) * size / 1048576 }'
+  else
+    awk '/^MemAvailable:/ { printf "%d\n", $2 / 1024 }' /proc/meminfo
+  fi
+}
+
+mem_total_mb() {
+  if [ "$(uname -s)" = "Darwin" ]; then
+    echo $(( $(sysctl -n hw.memsize) / 1048576 ))
+  else
+    awk '/^MemTotal:/ { printf "%d\n", $2 / 1024 }' /proc/meminfo
+  fi
+}
+
+# Linux swap here is zram: compressed memory, so "used" swap is still RAM.
+swap_used_mb() {
+  if [ "$(uname -s)" = "Darwin" ]; then
+    sysctl -n vm.swapusage 2>/dev/null | awk '{ for (i = 1; i <= NF; i++) if ($i == "used") { v = $(i + 2); sub(/M/, "", v); printf "%d\n", v } }'
+  else
+    awk '/^SwapTotal:/ { t = $2 } /^SwapFree:/ { f = $2 } END { printf "%d\n", (t - f) / 1024 }' /proc/meminfo
+  fi
+}
+
+gb() { awk -v mb="$1" 'BEGIN { printf "%.1f", mb / 1024 }'; }
+
+# ---------------------------------------------------------------- ollama ----
+ollama_up() { have ollama && ollama ps >/dev/null 2>&1; }
+
+loaded_models() { ollama ps 2>/dev/null | awk 'NR > 1 && NF { print $1 }'; }
+
+# `ollama ps` prints name:latest; people type the bare name.
+norm() { printf '%s' "${1%:latest}"; }
+
+# ---------------------------------------------------------------- searxng ---
+container_runtime() {
+  if have podman; then echo podman
+  elif have docker; then echo docker
+  fi
+}
+
+searxng_status() {
+  local rt
+  rt=$(container_runtime)
+  [ -n "$rt" ] || return 0
+  "$rt" ps --filter name=searxng --format '{{.Status}}' 2>/dev/null | head -n 1 || true
+}
+
+# ------------------------------------------------------------------- ps -----
+cmd_ps() {
+  have ollama || die "ollama is not installed"
+  if ollama_up; then
+    ollama ps
+  else
+    echo "Ollama is not running (nothing loaded)."
+  fi
+  echo
+  printf 'RAM      %s GB available of %s GB' "$(gb "$(mem_available_mb)")" "$(gb "$(mem_total_mb)")"
+  printf '   swap used %s GB' "$(gb "$(swap_used_mb)")"
+  [ "$(uname -s)" = "Linux" ] && printf ' (zram: counts as RAM)'
+  echo
+  local sx
+  sx=$(searxng_status)
+  printf 'SearXNG  %s\n' "${sx:-not running}"
+}
+
+# ------------------------------------------------------------------ free ----
+cmd_free() {
+  local all=0 targets=() arg
+  for arg in "$@"; do
+    case $arg in
+      --all) all=1 ;;
+      -*) die "unknown option: $arg" ;;
+      *) targets+=("$arg") ;;
+    esac
+  done
+
+  have ollama || die "ollama is not installed"
+  local before after changed=0
+  before=$(mem_available_mb)
+
+  if ! ollama_up; then
+    echo "Ollama is not running: no model is loaded."
+  else
+    if [ ${#targets[@]} -eq 0 ]; then
+      while IFS= read -r name; do targets+=("$name"); done < <(loaded_models)
+    fi
+    if [ ${#targets[@]} -eq 0 ]; then
+      echo "No model is loaded."
+    else
+      local m
+      changed=1
+      for m in "${targets[@]}"; do
+        printf 'unloading %s\n' "$m"
+        ollama stop "$m" || true
+      done
+      wait_unloaded "${targets[@]}" || {
+        echo "Still loaded after ${WAIT_SECONDS}s. Last resort:" >&2
+        if [ "$(uname -s)" = "Darwin" ]; then
+          echo "  brew services restart ollama   (or quit and reopen the Ollama app)" >&2
+        else
+          echo "  sudo systemctl restart ollama" >&2
+        fi
+        return 1
+      }
+    fi
+  fi
+
+  if [ "$all" -eq 1 ]; then
+    local rt
+    rt=$(container_runtime)
+    if [ -n "$rt" ] && [ -n "$(searxng_status)" ]; then
+      echo "stopping searxng"
+      changed=1
+      "$rt" stop searxng >/dev/null
+    fi
+  fi
+
+  [ "$changed" -eq 1 ] || return 0
+  # The runner process needs a moment to hand its pages back to the kernel.
+  sleep 1
+  after=$(mem_available_mb)
+  printf 'RAM available: %s GB -> %s GB (freed about %s GB)\n' \
+    "$(gb "$before")" "$(gb "$after")" "$(gb $(( after - before > 0 ? after - before : 0 )))"
+}
+
+# True once none of the named models is loaded any more.
+wait_unloaded() {
+  local deadline=$(( SECONDS + WAIT_SECONDS )) loaded m n
+  while [ "$SECONDS" -lt "$deadline" ]; do
+    loaded=$(loaded_models | while IFS= read -r n; do norm "$n"; echo; done)
+    local still=0
+    for m in "$@"; do
+      if printf '%s\n' "$loaded" | grep -Fxq "$(norm "$m")"; then still=1; fi
+    done
+    [ "$still" -eq 0 ] && return 0
+    sleep 0.5
+  done
+  return 1
+}
+
+# ------------------------------------------------------------------ warm ----
+# Base URL of the local Ollama server, from OLLAMA_HOST like the CLI reads it
+# ("host:port", "http://host:port" or just a host).
+ollama_url() {
+  local host=${OLLAMA_HOST:-127.0.0.1:11434}
+  case $host in http://*|https://*) ;; *) host=http://$host ;; esac
+  case $host in *://0.0.0.0*) host=${host/0.0.0.0/127.0.0.1} ;; esac
+  case ${host##*://} in *:*) ;; *) host=$host:11434 ;; esac
+  printf '%s' "$host"
+}
+
+cmd_warm() {
+  [ $# -eq 1 ] || die "usage: llm warm <model>"
+  have curl || die "curl is required"
+  ollama_up || die "Ollama is not running"
+  printf 'loading %s (keep-alive %s)... a big model takes 10-40 s\n' "$1" "$KEEP_ALIVE"
+  # /api/generate without a prompt only loads the model (`ollama run ""` would
+  # wait for input instead).
+  local out
+  out=$(curl -sS --max-time 300 "$(ollama_url)/api/generate" \
+    -d "{\"model\":\"$1\",\"keep_alive\":\"$KEEP_ALIVE\"}") || die "request failed"
+  case $out in
+    *'"error"'*) die "$(printf '%s' "$out" | sed -E 's/.*"error":"([^"]*)".*/\1/')" ;;
+  esac
+  ollama ps
+}
+
+# ------------------------------------------------------------------ main ----
+case "${1:-ps}" in
+  ps|status) shift || true; cmd_ps "$@" ;;
+  free|unload) shift; cmd_free "$@" ;;
+  warm|load) shift; cmd_warm "$@" ;;
+  -h|--help|help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac
