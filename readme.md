@@ -65,7 +65,7 @@ On the Air, Docker and containerd data live on the `epitech eu` ext4 partition, 
 
 ## Keyboard (GNOME)
 
-`keyboard/mba.kbd` is the internal keyboard on Fedora Asahi and on Ubuntu Desktop. KMonad grabs that one device. Hold **K** for left Ctrl, hold **L** for Hyper (left Ctrl, right Shift, left Alt, Super). Hyper plus a letter switches workspace. Left Shift plus Hyper moves the focused window there. A short tap still types the letter.
+`keyboard/mba.kbd` is the internal keyboard on Fedora Asahi and on Ubuntu Desktop. KMonad grabs that one device. **Caps Lock** is Escape. Hold **K** for left Ctrl, hold **L** for Hyper (left Ctrl, right Shift, left Alt, Super). Hyper plus a letter switches workspace. Left Shift plus Hyper moves the focused window there. A short tap still types the letter.
 
 | Keys | Workspaces |
 | --- | --- |
@@ -79,6 +79,10 @@ GNOME only has named shortcuts through workspace 12, so R is `switch-to-workspac
 The path checked in to `keyboard/mba.kbd` is the MacBook Air M1. `bootstrap/keyboard.sh` links that file when this machine's keyboard matches, and otherwise writes `/etc/kmonad/mba.kbd` with the detected `*-event-kbd` path. `install.sh` runs it. `sudo systemctl restart kmonad@mba` reloads the keymap.
 
 Workspaces, Caps Lock as Escape, the Tilix profile, and the Shell extensions come from `bootstrap/gnome.sh`. `install.sh` runs it when `XDG_CURRENT_DESKTOP` contains `GNOME`. Run it again from a GNOME session if an extension no longer matches the Shell version.
+
+## Keyboard (KDE Plasma)
+
+On a KDE session, `install.sh` runs `bootstrap/kde.sh` instead of `gnome.sh`. It sets 13 virtual desktops in one row, binds Hyper plus a letter to "Switch to Desktop N" and Shift+Alt+Super plus a letter to the `kde/kwin/move-and-follow` KWin script, which moves the window and switches there with it as GNOME does, maps Caps Lock to Escape, and loads the Tilix profile. KDE has a real desktop 13, so R goes there directly. It also turns animations off (instant speed, no slide or popup on a desktop switch) and disables the Baloo and localsearch file indexers. In place of the GNOME extensions, `kde/plasma/panel.js` makes the panel Pager show app icons instead of desktop numbers, and adds a text-only RAM percentage. Log out and back in if a shortcut or Caps Lock does not apply right away.
 
 Ubuntu does not ship KMonad. Install the x86_64 binary from the [KMonad releases](https://github.com/kmonad/kmonad/releases) to `/usr/local/bin/kmonad`, then:
 
@@ -96,6 +100,23 @@ sudo systemctl daemon-reload
 ```
 
 `install.sh` moves an existing file to `*.bak-dotfiles` when Stow would otherwise refuse to replace it.
+
+## Local LLM memory
+
+`llm` (in `scripts/`, linked to `~/.local/bin`) frees the RAM that Ollama keeps for a loaded model. A 30B model holds
+about 21 GB until its keep-alive runs out, which is most of a 31 GB machine. It needs only the `ollama` CLI, so it works
+the same on Fedora Asahi and macOS.
+
+```bash
+llm ps                  # loaded models, RAM available, swap, SearXNG
+llm free                # unload every model now (llmfree)
+llm free <model>        # unload one
+llm free --all          # also stop the SearXNG container
+llm warm <model>        # load a model now, so the 10-40 s cold start happens when you pick (llmwarm)
+```
+
+If a model stays loaded after 15 s, `llm free` prints the last resort (`sudo systemctl restart ollama` on Linux,
+`brew services restart ollama` on macOS). `LLM_KEEP_ALIVE` (default `30m`) sets the keep-alive used by `llm warm`.
 
 ## Layout
 

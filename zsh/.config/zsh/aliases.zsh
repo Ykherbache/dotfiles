@@ -11,3 +11,8 @@ alias createkh='tmp_script=$(mktemp) && curl -sSL -o "${tmp_script}" https://raw
 if command -v lsd >/dev/null 2>&1; then
   alias ls='lsd --group-directories-first --almost-all'
 fi
+
+# Local LLMs: see what is loaded, free the RAM, preload a model (scripts/.local/bin/llm).
+alias llmps='llm ps'
+alias llmfree='llm free'
+alias llmwarm='llm warm'

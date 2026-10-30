@@ -35,7 +35,13 @@ if [ "$(uname -s)" = "Linux" ]; then
   else
     bad "kmonad"
   fi
-  if [ "$(gsettings get org.gnome.desktop.wm.preferences num-workspaces 2>/dev/null || true)" = "13" ]; then
+  if [[ "${XDG_CURRENT_DESKTOP:-}" == *KDE* ]]; then
+    if [ "$(kreadconfig6 --file kwinrc --group Desktops --key Number 2>/dev/null || true)" = "13" ]; then
+      ok "kde workspaces"
+    else
+      bad "kde workspaces"
+    fi
+  elif [ "$(gsettings get org.gnome.desktop.wm.preferences num-workspaces 2>/dev/null || true)" = "13" ]; then
     ok "gnome workspaces"
   else
     bad "gnome workspaces"

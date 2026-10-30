@@ -1,8 +1,5 @@
 [tools]
-node = "lts"
-go = "latest"
-bun = "latest"
-# npm backend: the aqua registry for pnpm returned 400 during setup.
-"npm:pnpm" = "latest"
-lazydocker = "latest"
-terraform = "latest"
+go = "1.27.2"
+lazydocker = "0.25.2"
+pnpm = "12.10.1"
+terraform = "1.16.6"

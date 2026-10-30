@@ -16,3 +16,10 @@ source "$HOME/.config/zsh/tools.zsh"
 
 export AWS_PROFILE=new
 
+# rtk-proxy (proxy LLM de Claude Code) : hors de 8080, pris par la stack docker de time-manager.
+# Garder le même port que ANTHROPIC_BASE_URL dans ~/.claude/settings.json.
+export RTK_PROXY_BIND=127.0.0.1:8787
+
+
+# opencode
+export PATH=/home/kherbacheyacine/.opencode/bin:$PATH

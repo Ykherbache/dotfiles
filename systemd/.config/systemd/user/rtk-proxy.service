@@ -1,0 +1,17 @@
+# rtk-proxy, le proxy LLM de Claude Code, démarré à l'ouverture de session.
+# Le port doit rester celui de ANTHROPIC_BASE_URL dans ~/.claude/settings.json (8080 est pris par docker).
+#   systemctl --user enable --now rtk-proxy
+#   journalctl --user -u rtk-proxy -f
+[Unit]
+Description=rtk-proxy (proxy LLM de Claude Code)
+After=network-online.target
+
+[Service]
+Environment=RTK_PROXY_BIND=127.0.0.1:8787
+WorkingDirectory=%h/.config/rtk/llm-proxy
+ExecStart=%h/.local/bin/rtk-proxy start
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target
