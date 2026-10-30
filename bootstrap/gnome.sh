@@ -7,6 +7,11 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 
 log() { printf '==> %s\n' "$*"; }
 
+distro=unknown
+if [ -r /etc/os-release ]; then
+  distro=$(. /etc/os-release && printf '%s' "${ID:-unknown}")
+fi
+
 if ! command -v gsettings >/dev/null 2>&1; then
   echo "gsettings is missing; this script is for GNOME." >&2
   exit 1
@@ -19,19 +24,19 @@ bind() {
 log "workspaces and Hyper shortcuts"
 gsettings set org.gnome.mutter dynamic-workspaces false
 gsettings set org.gnome.desktop.wm.preferences num-workspaces 13
-bind switch-to-workspace-1 "['<Super>Home', '<Control><Shift><Alt><Super>a']"
-bind switch-to-workspace-2 "['<Control><Shift><Alt><Super>s']"
-bind switch-to-workspace-3 "['<Control><Shift><Alt><Super>d']"
-bind switch-to-workspace-4 "['<Control><Shift><Alt><Super>f']"
-bind switch-to-workspace-5 "['<Control><Shift><Alt><Super>g']"
-bind switch-to-workspace-6 "['<Control><Shift><Alt><Super>z']"
-bind switch-to-workspace-7 "['<Control><Shift><Alt><Super>x']"
-bind switch-to-workspace-8 "['<Control><Shift><Alt><Super>c']"
-bind switch-to-workspace-9 "['<Control><Shift><Alt><Super>v']"
-bind switch-to-workspace-10 "['<Control><Shift><Alt><Super>q']"
-bind switch-to-workspace-11 "['<Control><Shift><Alt><Super>w']"
-bind switch-to-workspace-12 "['<Control><Shift><Alt><Super>e']"
-bind switch-to-workspace-last "['<Super>End', '<Control><Shift><Alt><Super>r']"
+bind switch-to-workspace-1 "['<Super>Home', '<Shift><Super>a']"
+bind switch-to-workspace-2 "['<Shift><Super>s']"
+bind switch-to-workspace-3 "['<Shift><Super>d']"
+bind switch-to-workspace-4 "['<Shift><Super>f']"
+bind switch-to-workspace-5 "['<Shift><Super>g']"
+bind switch-to-workspace-6 "['<Shift><Super>z']"
+bind switch-to-workspace-7 "['<Shift><Super>x']"
+bind switch-to-workspace-8 "['<Shift><Super>c']"
+bind switch-to-workspace-9 "['<Shift><Super>v']"
+bind switch-to-workspace-10 "['<Shift><Super>q']"
+bind switch-to-workspace-11 "['<Shift><Super>w']"
+bind switch-to-workspace-12 "['<Shift><Super>e']"
+bind switch-to-workspace-last "['<Super>End', '<Shift><Super>r']"
 bind move-to-workspace-1 "['<Super><Shift>Home', '<Shift><Alt><Super>a']"
 bind move-to-workspace-2 "['<Shift><Alt><Super>s']"
 bind move-to-workspace-3 "['<Shift><Alt><Super>d']"
@@ -55,10 +60,9 @@ log "masking the file indexers"
 systemctl --user mask localsearch-3.service tracker-miner-fs-3.service \
   || log "could not mask the file indexers"
 
-# Present on this machine. background-logo ships with Fedora Workstation.
+# background-logo ships with Fedora Workstation, so it is not downloaded.
 # The last two are installed but not enabled.
-enabled_extensions=(
-  background-logo@fedorahosted.org
+download_extensions=(
   workspaces-by-open-apps@favo02.github.com
   impatience@gfxmonk.net
   ram_sens@mosazghi
@@ -67,6 +71,12 @@ extra_extensions=(
   improved-workspace-indicator@michaelaquilina.github.io
   statistig@mustafaaycll.github.io
 )
+enabled_extensions=("${download_extensions[@]}")
+case $distro in
+  fedora|fedora-asahi-remix)
+    enabled_extensions=(background-logo@fedorahosted.org "${enabled_extensions[@]}")
+    ;;
+esac
 
 install_extension() {
   local uuid=$1 shell_major info url tmp
@@ -115,11 +125,23 @@ PY
 failed=()
 if ! command -v gnome-extensions >/dev/null 2>&1 || ! command -v gnome-shell >/dev/null 2>&1; then
   log "gnome-extensions is missing; install these from https://extensions.gnome.org :"
-  printf '  %s\n' "${enabled_extensions[@]:1}" "${extra_extensions[@]}"
+  printf '  %s\n' "${download_extensions[@]}" "${extra_extensions[@]}"
 else
-  for uuid in "${enabled_extensions[@]:1}" "${extra_extensions[@]}"; do
+  for uuid in "${download_extensions[@]}" "${extra_extensions[@]}"; do
     install_extension "$uuid" || failed+=("$uuid")
   done
+fi
+
+if [ "$distro" = "ubuntu" ]; then
+  hint_uuid=keyd-layer-hint@dotfiles
+  hint_dest="${HOME}/.local/share/gnome-shell/extensions/${hint_uuid}"
+  mkdir -p "$hint_dest"
+  cp -a "$ROOT/gnome/${hint_uuid}/." "$hint_dest/"
+  enabled_extensions+=("$hint_uuid")
+  if command -v gnome-extensions >/dev/null 2>&1; then
+    gnome-extensions enable "$hint_uuid" \
+      || log "log out once so $hint_uuid can load"
+  fi
 fi
 
 quoted=$(printf "'%s', " "${enabled_extensions[@]}")

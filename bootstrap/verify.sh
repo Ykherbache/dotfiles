@@ -30,7 +30,17 @@ need uvx
 need aws
 
 if [ "$(uname -s)" = "Linux" ]; then
-  if systemctl is-active --quiet kmonad@mba; then
+  distro=
+  if [ -r /etc/os-release ]; then
+    distro=$(. /etc/os-release && printf '%s' "${ID:-}")
+  fi
+  if [ "$distro" = "ubuntu" ]; then
+    if systemctl is-active --quiet keyd; then
+      ok "keyd"
+    else
+      bad "keyd"
+    fi
+  elif systemctl is-active --quiet kmonad@mba; then
     ok "kmonad"
   else
     bad "kmonad"
