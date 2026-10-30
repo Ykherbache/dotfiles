@@ -1,0 +1,7 @@
+{
+  "uuid": "keyd-layer-hint@dotfiles",
+  "name": "keyd layer hint",
+  "description": "Shows workspace or déplacer next to the pointer while H or J is held.",
+  "shell-version": ["50"],
+  "version": 1
+}
