@@ -9,7 +9,7 @@
 ;; Caps Lock is Escape, so Vim leaves insert mode without leaving the home row.
 (defsrc
   caps
-  lsft k l
+  lsft k h j rsft
   a    s d f g
   z    x c v
   q    w e r
@@ -19,62 +19,49 @@
   ;; Tap = k. Hold past 200ms = left Ctrl.
   kctrl (tap-hold 200 k lctl)
 
-  ;; Left Shift still types capitals, and while it is held L becomes
-  ;; the move variant of Hyper (so Shift can be pressed before L).
-  sft (around lsft (layer-toggle shifted))
+  ;; Tap = h. Hold past 200ms is Shift + Super.
+  hhyper (tap-hold 200 h (around lsft (around lmet (layer-toggle hyper))))
 
-  ;; Tap = l. Hold past 200ms = Hyper:
-  ;; left Ctrl + right Shift + left Alt + left Super.
-  ;; Right Shift leaves left Shift free for "move window".
-  lhyper (tap-hold 200 l (around lctl (around rsft (around lalt (around lmet (layer-toggle hyper))))))
-  lhyper-move (tap-hold 200 l (around lctl (around rsft (around lalt (around lmet (layer-toggle hmove))))))
+  ;; Tap = j. Hold past 200ms moves the focused window.
+  ;; With no focused window on this workspace, it switches instead.
+  ;; H does nothing while J is held.
+  jmove (tap-hold 200 j (layer-toggle move))
 
-  ;; Hyper already holds Shift, so an extra left Shift is invisible to GNOME.
-  ;; Drop Ctrl for the tap: Shift+Alt+Super+letter moves the window,
-  ;; then Ctrl is pressed again so Hyper+letter still switches workspace.
-  mva (tap-macro (release-only lctl) P30 (around a P40) P30 (press-only lctl))
-  mvs (tap-macro (release-only lctl) P30 (around s P40) P30 (press-only lctl))
-  mvd (tap-macro (release-only lctl) P30 (around d P40) P30 (press-only lctl))
-  mvf (tap-macro (release-only lctl) P30 (around f P40) P30 (press-only lctl))
-  mvg (tap-macro (release-only lctl) P30 (around g P40) P30 (press-only lctl))
-  mvz (tap-macro (release-only lctl) P30 (around z P40) P30 (press-only lctl))
-  mvx (tap-macro (release-only lctl) P30 (around x P40) P30 (press-only lctl))
-  mvc (tap-macro (release-only lctl) P30 (around c P40) P30 (press-only lctl))
-  mvv (tap-macro (release-only lctl) P30 (around v P40) P30 (press-only lctl))
-  mvq (tap-macro (release-only lctl) P30 (around q P40) P30 (press-only lctl))
-  mvw (tap-macro (release-only lctl) P30 (around w P40) P30 (press-only lctl))
-  mve (tap-macro (release-only lctl) P30 (around e P40) P30 (press-only lctl))
-  mvr (tap-macro (release-only lctl) P30 (around r P40) P30 (press-only lctl))
+  mv1 (cmd-button "/usr/local/bin/gnome-ws move 1")
+  mv2 (cmd-button "/usr/local/bin/gnome-ws move 2")
+  mv3 (cmd-button "/usr/local/bin/gnome-ws move 3")
+  mv4 (cmd-button "/usr/local/bin/gnome-ws move 4")
+  mv5 (cmd-button "/usr/local/bin/gnome-ws move 5")
+  mv6 (cmd-button "/usr/local/bin/gnome-ws move 6")
+  mv7 (cmd-button "/usr/local/bin/gnome-ws move 7")
+  mv8 (cmd-button "/usr/local/bin/gnome-ws move 8")
+  mv9 (cmd-button "/usr/local/bin/gnome-ws move 9")
+  mv10 (cmd-button "/usr/local/bin/gnome-ws move 10")
+  mv11 (cmd-button "/usr/local/bin/gnome-ws move 11")
+  mv12 (cmd-button "/usr/local/bin/gnome-ws move 12")
+  mvlast (cmd-button "/usr/local/bin/gnome-ws move last")
 )
 
 (deflayer base
   esc
-  @sft @kctrl @lhyper
-  a    s      d       f g
+  lsft @kctrl @hhyper @jmove rsft
+  a    s      d       f      g
   z    x      c       v
   q    w      e       r
 )
 
-(deflayer shifted
-  _
-  _    @kctrl @lhyper-move
-  _    _      _       _ _
-  _    _      _       _
-  _    _      _       _
-)
-
 (deflayer hyper
   _
-  (layer-toggle hmove) _ _
+  _ _ _ j _
   _ _ _ _ _
   _ _ _ _
   _ _ _ _
 )
 
-(deflayer hmove
+(deflayer move
   _
-  _ _ _
-  @mva @mvs @mvd @mvf @mvg
-  @mvz @mvx @mvc @mvv
-  @mvq @mvw @mve @mvr
+  _ _ XX _ _
+  @mv1 @mv2 @mv3 @mv4 @mv5
+  @mv6 @mv7 @mv8 @mv9
+  @mv10 @mv11 @mv12 @mvlast
 )

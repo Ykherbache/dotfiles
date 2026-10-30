@@ -1,0 +1,7 @@
+.keyd-layer-hint {
+  background-color: rgba(20, 20, 20, 0.88);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+}

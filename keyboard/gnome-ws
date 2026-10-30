@@ -1,0 +1,50 @@
+#!/bin/sh
+# Ask the GNOME session to switch workspace, or move the focused window.
+# keyd and KMonad run this as root.
+set -eu
+
+action=${1:-}
+target=${2:-}
+
+case $action in
+  switch) method=Switch ;;
+  toggle) method=Toggle ;;
+  move) method=MoveOrSwitch ;;
+  *) exit 0 ;;
+esac
+
+case $target in
+  last | [1-9] | 1[0-2]) ;;
+  *)
+    [ "$action" = toggle ] || exit 0
+    ;;
+esac
+
+pid=""
+for p in $(pgrep -x gnome-shell || true); do
+  uid=$(awk '/^Uid:/{print $2; exit}' "/proc/$p/status")
+  user=$(id -nu "$uid" 2>/dev/null || true)
+  case $user in
+    '' | root | gdm) continue ;;
+  esac
+  pid=$p
+  break
+done
+
+[ -n "$pid" ] || exit 0
+
+uid=$(awk '/^Uid:/{print $2; exit}' "/proc/$pid/status")
+user=$(id -nu "$uid")
+bus="/run/user/$uid/bus"
+[ -S "$bus" ] || exit 0
+
+runuser -u "$user" -- env \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+  XDG_RUNTIME_DIR="/run/user/$uid" \
+  gdbus call --session \
+    --dest org.gnome.Shell \
+    --object-path /org/gnome/Shell/Extensions/KeydLayerHint \
+    --method "org.gnome.Shell.Extensions.KeydLayerHint.$method" \
+    "'$target'" \
+  >/dev/null 2>&1 &
+exit 0
