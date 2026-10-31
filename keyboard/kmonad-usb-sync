@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# Apply keyboard/mba.kbd to one USB keyboard, or stop it when that keyboard is gone.
+# plug/unplug <eventN> is called by kmonad-usb@.service. The .kbd file is kept.
+set -euo pipefail
+
+template=/usr/local/share/kmonad/usb-template.kbd
+marker=';; usb keyboard written by bootstrap/keyboard.sh'
+run_dir=/run/kmonad-usb
+lock_file=$run_dir/lock
+
+log() { printf 'kmonad-usb-sync: %s\n' "$*"; }
+
+usb_name() {
+  local base name rest suffix
+  base=$(basename "$1")
+  case $base in
+    *[Mm]ouse*) return 1 ;;
+    usb-*-event-kbd) rest=$(printf '%s\n' "${base#usb-}" | sed 's/-event-kbd$//') ;;
+    usb-*-event-if[0-9]*)
+      rest=$(printf '%s\n' "${base#usb-}" | sed 's/-event-if[0-9]*$//')
+      suffix=$(printf '%s\n' "$base" | sed -n 's/.*-\(if[0-9]*\)$/\1/p')
+      ;;
+    *) return 1 ;;
+  esac
+  name=$(printf '%s\n' "$rest" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '-' \
+    | awk -F- '{out=""; prev=""; for (i = 1; i <= NF; i++) { if ($i != "" && $i != prev) { out = out (out == "" ? "" : "-") $i; prev = $i } } print out}')
+  [ -n "${suffix:-}" ] && name="${name}-${suffix}"
+  [ -n "$name" ] && [ "$name" != "mba" ] || return 1
+  printf '%s\n' "$name"
+}
+
+by_id_for() {
+  local devnode link
+  devnode=$(readlink -f "$1")
+  shopt -s nullglob
+  for link in /dev/input/by-id/usb-*-event-kbd /dev/input/by-id/usb-*-event-if[0-9]*; do
+    case $(basename "$link") in
+      *[Mm]ouse*) continue ;;
+    esac
+    if [ "$(readlink -f "$link")" = "$devnode" ]; then
+      printf '%s\n' "$link"
+      shopt -u nullglob
+      return 0
+    fi
+  done
+  shopt -u nullglob
+  return 1
+}
+
+with_lock() {
+  mkdir -p "$run_dir" /etc/kmonad
+  exec 9>"$lock_file"
+  flock 9
+  "$@"
+}
+
+write_kbd() {
+  local byid=$1 name=$2 repo_path repo_sink
+  repo_path=$(sed -n 's/.*device-file "\([^"]*\)".*/\1/p' "$template" | head -1)
+  repo_sink=$(sed -n 's/.*uinput-sink "\([^"]*\)".*/\1/p' "$template" | head -1)
+  if [ -z "$repo_path" ] || [ -z "$repo_sink" ]; then
+    log "template has no device-file or uinput-sink"
+    return 1
+  fi
+  {
+    printf '%s\n' "$marker"
+    sed -e "s|$repo_path|$byid|" -e "s|\"$repo_sink\"|\"KMonad $name\"|" "$template"
+  } >"/etc/kmonad/$name.kbd"
+}
+
+plug_locked() {
+  local instance=$1 devnode byid name
+  devnode=/dev/input/$instance
+  if [ ! -e "$devnode" ]; then
+    log "$devnode is gone"
+    return 1
+  fi
+  if ! byid=$(by_id_for "$devnode"); then
+    log "no usb-*-event-kbd by-id link for $devnode"
+    return 1
+  fi
+  if ! name=$(usb_name "$byid"); then
+    log "skip $byid"
+    return 0
+  fi
+  if [ ! -r "$template" ]; then
+    log "missing $template"
+    return 1
+  fi
+  write_kbd "$byid" "$name"
+  printf '%s\n' "$instance" >"$run_dir/owner-$name"
+  printf '%s\n' "$name" >"$run_dir/inst-$instance"
+  # Not enabled: a missing cable must not start this at boot and restart-loop.
+  systemctl disable "kmonad@${name}.service" || true
+  systemctl restart "kmonad@${name}.service"
+  log "kmonad@$name is running for $byid"
+}
+
+unplug_locked() {
+  local instance=$1 name owner dev
+  [ -f "$run_dir/inst-$instance" ] || return 0
+  name=$(cat "$run_dir/inst-$instance")
+  owner=$(cat "$run_dir/owner-$name" 2>/dev/null || true)
+  # A replug already took this keymap. Do not stop the new grab.
+  if [ "$owner" != "$instance" ]; then
+    rm -f "$run_dir/inst-$instance"
+    return 0
+  fi
+  dev=$(sed -n 's/.*device-file "\([^"]*\)".*/\1/p' "/etc/kmonad/$name.kbd" | head -1)
+  systemctl stop "kmonad@${name}.service" || true
+  rm -f "$run_dir/owner-$name" "$run_dir/inst-$instance"
+  log "stopped kmonad@$name ($dev is kept)"
+}
+
+usage() {
+  echo "usage: kmonad-usb-sync plug|unplug <eventN>" >&2
+  exit 2
+}
+
+[ "$#" -eq 2 ] || usage
+case $1 in
+  plug) with_lock plug_locked "$2" ;;
+  unplug) with_lock unplug_locked "$2" ;;
+  *) usage ;;
+esac

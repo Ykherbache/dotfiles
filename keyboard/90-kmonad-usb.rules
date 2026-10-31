@@ -1,0 +1,19 @@
+# USB keyboards get the repo keymap when they appear.
+# SYSTEMD_WANTS starts kmonad-usb@<event>.service from systemd. This rule
+# does not call systemctl, so udev does not wait on it.
+# Unplug deactivates dev-input-<event>.device; that unit's BindsTo stops
+# the oneshot, whose ExecStop stops kmonad@<name>.
+ACTION=="add|remove", SUBSYSTEM=="input", KERNEL=="event*", \
+  ENV{ID_INPUT_KEYBOARD}=="1", ENV{ID_BUS}=="usb", \
+  TAG+="systemd", ENV{SYSTEMD_ALIAS}="/dev/input/%k", \
+  ENV{SYSTEMD_WANTS}+="kmonad-usb@%k.service"
+
+# The AK820's second interface is named "Keyboard" and still sends letters,
+# but udev does not set ID_INPUT_KEYBOARD because that interface is also a pointer.
+# It also has no by-id link, so the symlink gives kmonad a stable device path.
+ACTION=="add|remove", SUBSYSTEM=="input", KERNEL=="event*", \
+  ENV{ID_BUS}=="usb", ENV{ID_INPUT_KEY}=="1", ENV{ID_INPUT_KEYBOARD}!="1", \
+  ATTRS{name}=="*Keyboard*", \
+  SYMLINK+="input/by-id/usb-$env{ID_VENDOR_ENC}_$env{ID_MODEL_ENC}-nkro-event-kbd", \
+  TAG+="systemd", ENV{SYSTEMD_ALIAS}="/dev/input/%k", \
+  ENV{SYSTEMD_WANTS}+="kmonad-usb@%k.service"
