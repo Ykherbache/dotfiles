@@ -1,0 +1,12 @@
+{
+    "KPackageStructure": "KWin/Script",
+    "KPlugin": {
+        "Description": "Tell the pointer label where the cursor is",
+        "EnabledByDefault": false,
+        "Id": "layer-hint",
+        "License": "MIT",
+        "Name": "Layer hint"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js"
+}

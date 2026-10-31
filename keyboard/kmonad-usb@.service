@@ -1,0 +1,14 @@
+[Unit]
+Description=KMonad keymap for USB keyboard /dev/input/%i
+BindsTo=dev-input-%i.device
+After=dev-input-%i.device
+DefaultDependencies=no
+Conflicts=shutdown.target
+Before=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/libexec/kmonad-usb-sync plug %i
+ExecStop=/usr/local/libexec/kmonad-usb-sync unplug %i
+TimeoutSec=30s

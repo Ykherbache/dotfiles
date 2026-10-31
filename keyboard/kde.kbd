@@ -1,0 +1,66 @@
+(defcfg
+  ;; Same gestures as keyboard/mba.kbd, with the chords Plasma already binds.
+  ;; Hold H: Ctrl + Alt + Shift + Super, then a letter switches desktop.
+  ;; Hold J: Alt + Shift + Super, then a letter moves the window and follows it.
+  ;; On another machine, replace the device path. bootstrap/keyboard.sh does that.
+  input  (device-file "/dev/input/by-path/platform-23510c000.spi-cs-0-event-kbd")
+  output (uinput-sink "KMonad MacBook Air")
+  fallthrough true
+  allow-cmd true
+)
+
+;; Caps Lock is Escape, so Vim leaves insert mode without leaving the home row.
+(defsrc
+  caps
+  lsft k h j rsft
+  a    s d f g
+  z    x c v
+  q    w e r
+)
+
+(defalias
+  ;; Tap = k. Hold past 200ms = left Ctrl.
+  kctrl (tap-hold 200 k lctl)
+
+  ;; Tap = h. Hold past 200ms is the Hyper chord Plasma stores as
+  ;; Meta+Ctrl+Alt+Shift. The label appears for that hold and goes away on release.
+  ;; The shell returns at once. A command that waits would hold this key
+  ;; down, so the next letter would be the desktop shortcut instead of a character.
+  hhyper (tap-hold 200 h
+           (around
+             (cmd-button "sh -c '/usr/local/bin/kde-layer-hint show workspace >/dev/null 2>&1 &'"
+                         "sh -c '/usr/local/bin/kde-layer-hint hide >/dev/null 2>&1 &'")
+             (around lctl (around lsft (around lalt (around lmet (layer-toggle hyper)))))))
+
+  ;; Tap = j. Hold past 200ms is Meta+Alt+Shift, without Ctrl, so the
+  ;; "Move Window and Follow" shortcut runs instead of a desktop switch.
+  jmove (tap-hold 200 j
+          (around
+            (cmd-button "sh -c '/usr/local/bin/kde-layer-hint show déplacer >/dev/null 2>&1 &'"
+                        "sh -c '/usr/local/bin/kde-layer-hint hide >/dev/null 2>&1 &'")
+            (around lalt (around lsft (around lmet (layer-toggle move))))))
+)
+
+(deflayer base
+  esc
+  lsft @kctrl @hhyper @jmove rsft
+  a    s      d       f      g
+  z    x      c       v
+  q    w      e       r
+)
+
+(deflayer hyper
+  _
+  _ _ _ j _
+  _ _ _ _ _
+  _ _ _ _
+  _ _ _ _
+)
+
+(deflayer move
+  _
+  _ _ XX _ _
+  _ _ _ _ _
+  _ _ _ _
+  _ _ _ _
+)

@@ -1,0 +1,18 @@
+[Unit]
+Description=Pointer label for KMonad workspace and move layers
+PartOf=graphical-session.target
+After=graphical-session.target
+StartLimitIntervalSec=30
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/kde-layer-hint daemon
+Environment=QT_QPA_PLATFORM=xcb
+Environment=QT_SCALE_FACTOR=1
+Environment=QT_ENABLE_HIGHDPI_SCALING=0
+Restart=on-failure
+RestartSec=1
+
+[Install]
+WantedBy=graphical-session.target
