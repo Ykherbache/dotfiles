@@ -84,7 +84,7 @@ else
 fi
 repo_path=$(sed -n 's/.*device-file "\([^"]*\)".*/\1/p' "$repo_kbd" | head -1)
 if [ -z "$repo_path" ]; then
-  echo "keyboard/mba.kbd has no device-file" >&2
+  echo "$repo_kbd has no device-file" >&2
   exit 1
 fi
 
@@ -120,11 +120,8 @@ elif ! command -v kmonad >/dev/null 2>&1; then
 fi
 
 sudo systemctl enable kmonad@mba.service
-if [ "$detected" = "$repo_path" ]; then
-  sudo systemctl start kmonad@mba.service
-else
-  sudo systemctl restart kmonad@mba.service
-fi
+# Restart, not start: the symlink may now point at another keymap.
+sudo systemctl restart kmonad@mba.service
 log "kmonad@mba is enabled"
 
 # USB keyboards get the same keymap when they are plugged in, not only when
@@ -165,3 +162,10 @@ for dev in /dev/input/by-id/usb-*-event-kbd /dev/input/by-id/usb-*-event-if[0-9]
   log "kmonad-usb@$event started for $dev"
 done
 shopt -u nullglob
+
+# kde.sh runs before this script on a fresh install and may have started the
+# label before its binary existed.
+if systemctl --user cat kde-layer-hint.service >/dev/null 2>&1; then
+  systemctl --user reset-failed kde-layer-hint.service || true
+  systemctl --user try-restart kde-layer-hint.service || true
+fi

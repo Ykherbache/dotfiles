@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Apply keyboard/mba.kbd to one USB keyboard, or stop it when that keyboard is gone.
+# Apply the installed keymap template to one USB keyboard, or stop it when that keyboard is gone.
 # plug/unplug <eventN> is called by kmonad-usb@.service. The .kbd file is kept.
 set -euo pipefail
 
@@ -79,6 +79,16 @@ plug_locked() {
     log "no usb-*-event-kbd by-id link for $devnode"
     return 1
   fi
+  # Secondary interfaces only count when they are named Keyboard, as in the
+  # udev rule. Media-key and mouse interfaces stay alone.
+  case $byid in
+    *-event-if[0-9]*)
+      case $(cat "/sys/class/input/$instance/device/name" 2>/dev/null || true) in
+        *Keyboard*) ;;
+        *) log "skip $byid (not named Keyboard)"; return 0 ;;
+      esac
+      ;;
+  esac
   if ! name=$(usb_name "$byid"); then
     log "skip $byid"
     return 0
