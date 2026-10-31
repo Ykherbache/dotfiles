@@ -18,11 +18,4 @@ function pushCursor() {
 
 workspace.cursorPosChanged.connect(pushCursor);
 
-if (typeof QTimer !== "undefined") {
-    var timer = new QTimer();
-    timer.interval = 32;
-    timer.timeout.connect(pushCursor);
-    timer.start();
-}
-
 pushCursor();

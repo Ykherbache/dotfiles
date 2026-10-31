@@ -19,12 +19,10 @@ Personal dotfiles for three machines: MacBook Air on macOS (`macos-air`), Fedora
 stow -t "$HOME" -R <package>   # relink one package after editing it
 ```
 
-Check shell scripts with `bash -n <file>` (and `shellcheck` if available) before running anything that touches `/etc` or systemd.
-
 ## Architecture
 
 - **Stow packages.** Each top-level directory (`zsh nvim tmux git ssh scripts claude agents opencode mise systemd`) mirrors `$HOME`; the layout inside a package is the target path (e.g. `claude/.claude/settings.json` → `~/.claude/settings.json`). `install.sh` holds the package list in `stow_packages()` — add new packages there. Before stowing, `prepare_stow_targets()` moves conflicting real files to `*.bak-dotfiles`.
-- **Not stowed.** `cursor/` is symlinked by `link_cursor()` in `install.sh` because Cursor's settings live outside a Stow-friendly path (macOS vs Linux paths differ; `mcp.json` is special-cased for GitLens). `bootstrap/`, `docs/`, `kde/`, `keyboard/`, `gnome/` are consumed by the bootstrap scripts, not stowed.
+- **Not stowed.** `cursor/` is symlinked by `link_cursor()` in `install.sh` because Cursor's settings live outside a Stow-friendly path (macOS vs Linux paths differ; `mcp.json` is special-cased for GitLens). `bootstrap/`, `kde/`, `keyboard/`, `gnome/` are consumed by the bootstrap scripts, not stowed.
 - **Profile detection.** `install.sh` `detect_profile()` picks the profile from `uname` and `/etc/os-release`, then installs from `Brewfile`, `fedora-packages.txt` or `ubuntu-packages.txt`. Fedora installs package by package so one missing name doesn't abort the run; macOS uses `brew bundle --no-upgrade` on purpose.
 - **Desktop + keyboard layer.** `install.sh` `setup_desktop()` runs `gnome.sh` or `kde.sh` by `XDG_CURRENT_DESKTOP`, then `keyboard.sh`. The keyboard model is shared across machines: hold-tap keys (K = Ctrl, H = switch workspace, J = move window, P = previous workspace) implemented as:
   - Ubuntu: `keyd` via `keyboard/keyd.conf`, with the `gnome-ws` helper.

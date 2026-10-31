@@ -28,3 +28,4 @@ d2
 mkcert
 tilix
 python3
+python3-pyside6
