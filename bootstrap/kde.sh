@@ -52,6 +52,8 @@ scripts_dir="${XDG_DATA_HOME:-$HOME/.local/share}/kwin/scripts"
 mkdir -p "$scripts_dir"
 ln -sfn "$ROOT/kde/kwin/move-and-follow" "$scripts_dir/move-and-follow"
 kwriteconfig6 --file kwinrc --group Plugins --key move-and-followEnabled true
+ln -sfn "$ROOT/kde/kwin/layer-hint" "$scripts_dir/layer-hint"
+kwriteconfig6 --file kwinrc --group Plugins --key layer-hintEnabled true
 
 log "workspaces and Hyper shortcuts"
 kwriteconfig6 --file kwinrc --group Desktops --key Number 13
@@ -95,5 +97,14 @@ if command -v dconf >/dev/null 2>&1; then
 fi
 
 reload_kwin
+
+log "pointer label"
+unit_dir="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user"
+mkdir -p "$unit_dir"
+ln -sfn "$ROOT/keyboard/kde-layer-hint.service" "$unit_dir/kde-layer-hint.service"
+systemctl --user daemon-reload
+systemctl --user enable kde-layer-hint.service
+systemctl --user restart kde-layer-hint.service \
+  || log "could not start the pointer label"
 
 log "KDE settings applied. Log out and back in if a shortcut or Caps Lock does not work yet."
